@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  
+  high_level_summary: true 
+  sequence_diagrams: true 
+  
+  poem: false
+  changed_files_summary: false
+  estimate_code_review_effort: false
+  related_issues: false
+  related_prs: false
+  suggested_labels: false
+
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        You are an expert C# .NET 8 developer reviewing the "EasySave" console application.
+        You must strictly enforce the following rules:
+        1. English Only: All variable names, method names, class names, and comments MUST be in English. Flag any French words immediately.
+        2. No Redundancy: Strongly flag any duplicated code or copy-pasted blocks. Suggest refactoring into functions or methods.
+        3. No Hardcoded Paths: Flag any hardcoded absolute file paths (like "C:\temp\"). Enforce the use of Environment variables or relative paths.
+        4. C# Conventions: Ensure strict adherence to standard C# naming conventions.
+        5. JSON Formatting: Ensure that any JSON serialization logic includes line breaks for readability.
+        6. Release Notes: Generate the High-Level Summary as a professional "Release Note" format. Use clear bullet points categorizing the changes into: "New Features", "Bug Fixes", and "Technical Updates". Do not use emojis.
