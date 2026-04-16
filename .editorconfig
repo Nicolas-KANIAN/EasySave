@@ -12,7 +12,6 @@ indent_style = space
 tab_width = 4
 
 # Préférences de nouvelle ligne
-end_of_line = crlf
 insert_final_newline = false
 
 #### Actions du code .NET ####

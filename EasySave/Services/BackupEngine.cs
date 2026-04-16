@@ -1,6 +1,6 @@
-﻿using System.Diagnostics;
-using EasyLog;
+﻿using EasyLog;
 using EasySave.Models;
+using System.Diagnostics;
 
 namespace EasySave.Services
 {
@@ -135,7 +135,7 @@ namespace EasySave.Services
                     files.AddRange(GetFilesRecursive(dir));
                 }
             }
-            catch (UnauthorizedAccessException) {}
+            catch (UnauthorizedAccessException) { }
             return files;
         }
     }
