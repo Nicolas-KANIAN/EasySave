@@ -43,7 +43,7 @@ The project follows an iterative, accelerated development cycle divided into thr
 
 To guarantee that the project can be inherited by other international ProSoft subsidiaries, our team strictly adheres to a robust DevOps pipeline:
 
-* **Language & Framework:** C# / .NET 8.0 / Visual Studio 2022
+* **Language & Framework:** C# / .NET 8.0 / Visual Studio
 * **Version Control:** GitHub (with branch protections and mandatory PR reviews).
 * **Code Formatting:** `.editorconfig` enforced via `dotnet format` to guarantee naming conventions.
 * **Unit Testing:** Automated `xUnit` test suites running on every commit.
@@ -98,7 +98,7 @@ Le projet suit un cycle de développement itératif divisé en trois versions ma
 
 Pour garantir que le projet puisse être repris par d'autres filiales internationales de ProSoft, notre équipe respecte un pipeline DevOps robuste :
 
-* **Langage & Framework :** C# / .NET 8.0 / Visual Studio 2022
+* **Langage & Framework :** C# / .NET 8.0 / Visual Studio
 * **Versionning :** GitHub (avec protection des branches et revues de PR obligatoires).
 * **Formatage du Code :** Règles `.editorconfig` appliquées via `dotnet format`.
 * **Tests Unitaires :** Suites de tests `xUnit` automatisées.
