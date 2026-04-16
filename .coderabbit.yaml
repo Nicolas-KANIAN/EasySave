@@ -5,6 +5,13 @@ reviews:
   profile: "assertive"
   request_changes_workflow: true
   
+  auto_review:
+    enabled: true
+    base_branches:
+      - "main"
+      - "master"
+      - "develop"
+      
   high_level_summary: true 
   sequence_diagrams: true 
   
