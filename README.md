@@ -1,85 +1,109 @@
-# EasySave Project - ProSoft Suite 💾
+# PGE A3 FISE INFO - Software Engineering : EasySave Project 💾
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#) [![.NET](https://img.shields.io/badge/.NET-8.0-blue)](#) [![Language](https://img.shields.io/badge/Language-C%23-purple)](#)
+🇬🇧 **[English Version]** | 🇫🇷 [Version Française](#-version-française)
 
-## 🏢 1. Project Context & Introduction
+[![.NET](https://img.shields.io/badge/.NET-8.0-blue)](#) [![Language](https://img.shields.io/badge/Language-C%23-purple)](#) [![CodeRabbit](https://img.shields.io/badge/CodeRabbit-AI_Review-FF6B6B)](#)
 
-Our development team has joined the software publisher **ProSoft**. Reporting directly to the CIO, we are responsible for the end-to-end management and development of the **EasySave** backup software. 
+## 🏢 1. Academic & Business Context
 
-EasySave is a premium solution integrated into the ProSoft Suite pricing policy:
-* **Unit Price:** €200 (excluding tax)
-* **Annual Maintenance Contract:** 12% of the purchase price (includes 5/7 8am-5pm support and updates, tacitly renewed and indexed).
+This project is the core evaluation for the **Software Engineering (Génie Logiciel)** module. 
 
-Our team is tasked with the full lifecycle of the software: development, major/minor release management, customer support documentation, and strict version control to minimize future development costs.
+Our development team acts as a newly integrated software unit for the publisher **ProSoft**. Reporting to the CIO, we are tasked with the end-to-end development of **EasySave**, a professional backup management software. 
+The software is integrated into the ProSoft Suite (Unit price: €200 excl. tax, with a 12% annual maintenance contract). The main business objective is to deliver a robust product while keeping future development and maintenance costs as low as possible.
 
----
+## ❓ 2. Problematic & Challenges
 
-## 📅 2. Project Calendar & Deliverables
+Developing EasySave is an exercise in **software architecture and lifecycle management**. 
+The project spans several weeks and requires the software to evolve drastically without breaking its core functionalities:
 
-The project follows an accelerated development cycle divided into three major milestones:
+* **Scalability & Evolvability:** The software begins as a basic Console Application but must seamlessly transition to a Graphical User Interface (GUI) using the **MVVM pattern**.
+* **Strict Code Quality:** International maintainability requires 100% English code, strict C# naming conventions, and absolute avoidance of code redundancy.
+* **Traceability:** Industrial-grade real-time logging systems must be implemented to track the exact state and performance of file transfers down to the millisecond.
 
-### Deliverable 1: EasySave Version 1.0 (Current Version)
-* **Day 1:** Project launch and Specifications receipt.
-* **Day 3:** Work environment setup and tutor access granting.
-* **D-1:** Delivery of UML architecture diagrams (ArgoUML).
-* **Delivery Day:** Official release of EasySave v1.0 (Console Application) and associated documentation.
+## 🗺️ 3. Project Roadmap & Deliverables
 
-### Deliverable 2: EasySave Versions 2.0 & 1.1 (Upcoming)
-* **Post-D1:** Provision of specifications for the GUI version (MVVM architecture).
-* **D-1:** Delivery of updated UML diagrams.
-* **Delivery Day:** Receipt of Deliverable 2.
+The project follows an iterative, accelerated development cycle divided into three major releases:
 
-### Deliverable 3: EasySave Version 3.0 (Final)
-* **Post-D2:** Specifications for Version 3.
-* **D-2:** Final UML diagrams.
-* **Presentation Day:** Project defense and final delivery.
+### 📍 Phase 1: The Foundation (Deliverable 1 - EasySave v1.0)
+* **Goal:** Build the core business logic and backup engine.
+* **Format:** C# Console Application.
+* **Features:** * Creation of up to 5 sequential backup jobs (Full or Differential).
+  * Implementation of the `EasyLog.dll` library for real-time state tracking and daily JSON logs.
+* **Engineering:** Setup of GitHub CI/CD, Unit Tests (`xUnit`), CodeRabbit AI integration, and initial UML diagrams (ArgoUML).
 
----
+### 📍 Phase 2: The Interface (Deliverable 2 - EasySave v2.0)
+* **Goal:** Migrate from the console to a modern Graphical User Interface.
+* **Architecture:** Strict implementation of the **MVVM (Model-View-ViewModel)** architectural pattern.
+* **Features:** Visual representation of backup progress and interactive job management.
 
-## 🎯 3. Deliverable 1 Specifications (v1.0)
+### 📍 Phase 3: The Optimization (Deliverable 3 - EasySave v3.0)
+* **Goal:** Advanced performance and system optimization (Business software detection, Parallel execution, Encryption).
 
-Version 1.0 is a robust, bilingual (English/French) **Console Application** built on .NET 8.0.
+## ⚙️ 4. Technical Stack & CI/CD Ecosystem
 
-### ⚙️ Core Features
-* **Job Management:** Users can configure up to **5 simultaneous backup jobs**.
-* **Job Definition:** Each job consists of a Name, Source Directory, Target Directory, and Backup Type.
-* **Backup Types Supported:**
-  * **Full Backup:** Copies all files from the source to the target.
-  * **Differential Backup:** Copies only files that are new or have been modified since the last backup.
-* **Execution:** Jobs can be executed individually or sequentially. Parallel execution is not supported in this version.
-* **Storage Compatibility:** Supports local disks, external drives, and network drives (UNC paths).
+To guarantee that the project can be inherited by other international ProSoft subsidiaries, our team strictly adheres to a robust DevOps pipeline:
 
-### 📝 Tracking & Logging System
-To ensure strict monitoring, logging features are isolated in a custom Dynamic Link Library (**`EasyLog.dll`**). Logs are safely stored in the application directory, strictly avoiding temporary OS folders (e.g., `C:\temp\`).
-
-1. **Daily Log File (e.g., `YYYY-MM-DD.json`):**
-   Records every file transfer in real-time. Includes Timestamp, Backup Name, Source Path, Target Path, File Size, and Transfer Time (in ms).
-2. **Real-Time Status File (`state.json`):**
-   A single file updated in real-time tracking the exact progression of the current job (Active/Inactive state, total files, remaining files, file currently being copied, and percentage of completion). 
-
-*Note: All logs are formatted in JSON with proper line breaks and indentation for quick reading via text editors.*
+* **Language & Framework:** C# / .NET 8.0 / Visual Studio 2022
+* **Version Control:** GitHub (with branch protections and mandatory PR reviews).
+* **Code Formatting:** `.editorconfig` enforced via `dotnet format` to guarantee naming conventions.
+* **Unit Testing:** Automated `xUnit` test suites running on every commit.
+* **🤖 AI Code Review (CodeRabbit):** To enforce ProSoft's strict constraints, we integrated **CodeRabbit** into our GitHub repository. On every Pull Request, this AI-driven tool automatically scans the code to:
+  * Detect and block any French variables or comments (enforcing the English-only rule).
+  * Highlight code redundancy and suggest refactoring.
+  * Prevent hardcoded paths (e.g., `C:\temp\`).
+  * Generate automated, professional Release Notes based on the commits.
 
 ---
-
-## 🛠️ 4. Technical Constraints & Environment
-
-To guarantee that the project can be taken over by other international ProSoft teams, strict management constraints are enforced:
-
-* **Framework:** C# Language, .NET 8.0 Library.
-* **IDE:** Visual Studio 2022 (or higher).
-* **Version Control:** GitHub (with CI/CD checks for code quality and test validation).
-* **UML Design:** ArgoUML.
-* **Clean Code Standards:** * Strict English usage for all variables, methods, and comments.
-  * Strict compliance with C# naming conventions (enforced via `.editorconfig`).
-  * Absolute minimization of code redundancy (no copy-pasting).
-  * High readability and maintainable architecture (decoupled UI and Business Logic to prepare for v2.0 MVVM).
-
 ---
 
-## 🚀 5. User Manual (Quick Start)
+<a id="-version-française"></a>
+# 🇫🇷 Version Française
 
-### Interactive Mode
-Launch the application by running the executable directly. You will be prompted to select your language (English or French) and presented with an interactive menu to Create, List, or Run backup jobs.
+## 🏢 1. Contexte Académique et Métier
 
-```bash
-./EasySave.exe
+Ce projet constitue l'évaluation principale du module de **Génie Logiciel**. 
+
+Notre équipe de développement agit en tant que nouvelle unité logicielle pour l'éditeur **ProSoft**. Sous la direction du DSI, nous sommes chargés du développement complet de **EasySave**, un logiciel de sauvegarde professionnel.
+Le logiciel est intégré à la suite ProSoft (Prix de vente : 200 € HT, avec un contrat de maintenance annuel de 12 %). L'objectif métier est de livrer un produit robuste tout en minimisant les coûts de développement futurs.
+
+## ❓ 2. Problématiques et Enjeux
+
+Développer EasySave est un exercice poussé **d'architecture logicielle et de gestion du cycle de vie**.
+Le projet s'étale sur plusieurs semaines et le logiciel doit évoluer sans casser le cœur de l'application :
+
+* **Évolutivité :** Le logiciel commence comme une application Console mais devra migrer vers une interface graphique (GUI) en utilisant l'architecture **MVVM**.
+* **Qualité de code stricte :** La maintenabilité internationale exige un code 100% en anglais, le respect strict des conventions de nommage C#, et l'absence totale de redondance (pas de copier-coller).
+* **Traçabilité :** Un système de logs en temps réel doit être implémenté pour suivre l'état exact des transferts de fichiers à la milliseconde près.
+
+## 🗺️ 3. Feuille de Route et Livrables
+
+Le projet suit un cycle de développement itératif divisé en trois versions majeures :
+
+### 📍 Phase 1 : Les Fondations (Livrable 1 - EasySave v1.0)
+* **Objectif :** Construire la logique métier et le moteur de sauvegarde.
+* **Format :** Application Console C#.
+* **Fonctionnalités :** * Création de 5 travaux de sauvegarde séquentiels (Complet ou Différentiel).
+  * Implémentation de la bibliothèque `EasyLog.dll` pour le suivi en temps réel et les logs journaliers JSON.
+* **Ingénierie :** Mise en place de la CI/CD GitHub, Tests Unitaires (`xUnit`), intégration de CodeRabbit, et diagrammes UML (ArgoUML).
+
+### 📍 Phase 2 : L'Interface (Livrable 2 - EasySave v2.0)
+* **Objectif :** Migration vers une interface graphique moderne.
+* **Architecture :** Implémentation stricte du patron de conception **MVVM (Model-View-ViewModel)**.
+* **Fonctionnalités :** Représentation visuelle de la progression (barres de chargement) et gestion interactive des travaux.
+
+### 📍 Phase 3 : L'Optimisation (Livrable 3 - EasySave v3.0)
+* **Objectif :** Optimisation des performances (Détection de logiciels métiers, exécution parallèle, chiffrement).
+
+## ⚙️ 4. Stack Technique et Écosystème CI/CD
+
+Pour garantir que le projet puisse être repris par d'autres filiales internationales de ProSoft, notre équipe respecte un pipeline DevOps robuste :
+
+* **Langage & Framework :** C# / .NET 8.0 / Visual Studio 2022
+* **Versionning :** GitHub (avec protection des branches et revues de PR obligatoires).
+* **Formatage du Code :** Règles `.editorconfig` appliquées via `dotnet format`.
+* **Tests Unitaires :** Suites de tests `xUnit` automatisées.
+* **🤖 Revue de Code par IA (CodeRabbit) :** Afin de respecter les contraintes strictes de ProSoft, nous avons intégré **CodeRabbit** à notre dépôt GitHub. À chaque Pull Request, cette IA analyse automatiquement le code pour :
+  * Détecter et bloquer les variables ou commentaires en français (règle du 100% anglais).
+  * Signaler les redondances de code et suggérer des refactorisations.
+  * Interdire l'utilisation de chemins codés en dur (ex: `C:\temp\`).
+  * Générer automatiquement des notes de version (Release Notes) professionnelles.
