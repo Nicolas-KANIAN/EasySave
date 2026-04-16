@@ -7,20 +7,20 @@ namespace EasyLog
 {
     public class Logger
     {
-        private readonly string logDirectory = @"C:\EasySave\Logs";
+        private readonly string _logDirectory = @"C:\EasySave\Logs";
 
         public Logger()
         {
-            if (!Directory.Exists(logDirectory))
+            if (!Directory.Exists(_logDirectory))
             {
-                Directory.CreateDirectory(logDirectory);
+                Directory.CreateDirectory(_logDirectory);
             }
         }
 
         public void WriteDailyLog(LogEntry entry)
         {
             string date = DateTime.Now.ToString("yyyy-MM-dd");
-            string filePath = Path.Combine(logDirectory, $"{date}.json");
+            string filePath = Path.Combine(_logDirectory, $"{date}.json");
 
             var options = new JsonSerializerOptions { WriteIndented = true };
             List<LogEntry> logs = new List<LogEntry>();
@@ -40,7 +40,7 @@ namespace EasyLog
 
         public void UpdateState(List<StateEntry> states)
         {
-            string filePath = Path.Combine(logDirectory, "state.json");
+            string filePath = Path.Combine(_logDirectory, "state.json");
             var options = new JsonSerializerOptions { WriteIndented = true };
             File.WriteAllText(filePath, JsonSerializer.Serialize(states, options));
         }
