@@ -9,11 +9,29 @@ namespace EasyLog
     {
         private readonly string _logDirectory = @"C:\EasySave\Logs";
 
-        public Logger()
+        private static Logger? _instance;
+        private static readonly object _lock = new object();
+
+        private Logger()
         {
             if (!Directory.Exists(_logDirectory))
             {
                 Directory.CreateDirectory(_logDirectory);
+            }
+        }
+
+        public static Logger Instance
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    if (_instance == null)
+                    {
+                        _instance = new Logger();
+                    }
+                    return _instance;
+                }
             }
         }
 
@@ -30,7 +48,7 @@ namespace EasyLog
                 string json = File.ReadAllText(filePath);
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    logs = JsonSerializer.Deserialize<List<LogEntry>>(json);
+                    logs = JsonSerializer.Deserialize<List<LogEntry>>(json) ?? new List<LogEntry>();
                 }
             }
 
