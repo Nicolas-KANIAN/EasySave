@@ -1,3 +1,10 @@
+/**********************************
+*
+* La classe BackupJobTests permet de vérifier que la classe
+* BackupJob focntionne correctement.
+*
+**********************************/
+
 using Xunit;
 using EasySave.Models;
 
@@ -5,6 +12,16 @@ namespace EasySave.Tests
 {
     public class BackupJobTests
     {
+
+        /**********************
+        *
+        *   Ce test vérifie que le constructeur de BackupJob 
+        *   affecte les propriétés correctement.
+        *   
+        *   Si les valeurs de l'objet sont celles initialisé dans
+        *   le test, alors le constructeur fonctionne.
+        *
+        **********************/
         [Fact]
         public void BackupJob_Creation_ShouldSetPropertiesCorrectly()
         {
