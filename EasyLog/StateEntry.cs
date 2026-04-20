@@ -13,6 +13,7 @@ namespace EasyLog
         public int Progression { get; set; }
         public string CurrentSourceFile { get; set; }
         public string CurrentTargetFile { get; set; }
+        public long RemainingFilesSize { get; set; }
 
         public StateEntry()
         {

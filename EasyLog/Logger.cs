@@ -7,7 +7,7 @@ namespace EasyLog
 {
     public class Logger
     {
-        private readonly string _logDirectory = @"C:\EasySave\Logs";
+        private readonly string _logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
 
         private static Logger? _instance;
         private static readonly object _lock = new object();

@@ -5,7 +5,7 @@ namespace EasySave.Services
 {
     public class JobManager
     {
-        private readonly string _configPath = @"C:\EasySave\jobs.json";
+        private readonly string _configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "jobs.json");
         public List<BackupJob> Jobs { get; private set; }
 
         public JobManager()

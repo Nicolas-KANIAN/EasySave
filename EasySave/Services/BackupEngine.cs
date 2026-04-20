@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
+﻿using System.Diagnostics;
 using EasyLog;
 using EasySave.Models;
 using EasySave.Patterns.Bridge;
@@ -76,6 +72,7 @@ namespace EasySave.Services
                 TotalFilesToCopy = totalFiles,
                 TotalFilesSize = totalSize,
                 NbFilesLeftToDo = totalFiles,
+                RemainingFilesSize = totalSize,
                 Progression = 0
             };
 
@@ -97,11 +94,14 @@ namespace EasySave.Services
 
                 try
                 {
+                    long currentFileSize = _fileSystem.GetFileSize(sourceFile);
+
                     _fileSystem.CopyFile(sourceFile, targetFile, true);
                     sw.Stop();
                     filesCopied++;
 
                     currentState.NbFilesLeftToDo = totalFiles - filesCopied;
+                    currentState.RemainingFilesSize -= currentFileSize;
                     currentState.Progression = (int)((double)filesCopied / totalFiles * 100);
 
                     NotifyObservers(currentState);
@@ -111,7 +111,7 @@ namespace EasySave.Services
                         BackupName = job.Name,
                         SourceFile = sourceFile,
                         TargetFile = targetFile,
-                        FileSize = _fileSystem.GetFileSize(targetFile),
+                        FileSize = currentFileSize,
                         TransferTime = sw.ElapsedMilliseconds
                     };
                     Logger.Instance.WriteDailyLog(log);
@@ -123,6 +123,7 @@ namespace EasySave.Services
             }
 
             currentState.State = "INACTIVE";
+            currentState.RemainingFilesSize = 0;
             NotifyObservers(currentState);
             Console.WriteLine($"[INFO] Backup {job.Name} finished successfully.");
         }
