@@ -38,7 +38,8 @@ namespace EasySave
 
             if (args.Length > 0)
             {
-                ExecuteCommandLine(args[0], jobManager, engine);
+                string command = string.Join("", args);
+                ExecuteCommandLine(command, jobManager, engine);
                 return;
             }
 
@@ -101,16 +102,24 @@ namespace EasySave
                         break;
 
                     case "3":
+                        Console.Write(isFrench ? "Entrez l'index (1-5) ou 'all' pour tout lancer : " : "Enter job index (1-5) or 'all' to run all: ");
+                        string input = Console.ReadLine()?.Trim().ToLower();
 
-                        // Permet de lancer uen sauvegarde en sélectionnant l'index du job
-                        Console.Write(isFrench ? "Entrez l'index du travail (ex: 1) : " : "Enter job index (e.g., 1): ");
-                        if (int.TryParse(Console.ReadLine(), out int index) && index > 0 && index <= jobManager.Jobs.Count)
+                        if (input == "all")
+                        {
+                            Console.WriteLine(isFrench ? "[INFO] Lancement séquentiel de tous les travaux..." : "[INFO] Sequential execution of all jobs...");
+                            foreach (var job in jobManager.Jobs)
+                            {
+                                engine.ExecuteJob(job);
+                            }
+                        }
+                        else if (int.TryParse(input, out int index) && index > 0 && index <= jobManager.Jobs.Count)
                         {
                             engine.ExecuteJob(jobManager.Jobs[index - 1]);
                         }
                         else
                         {
-                            Console.WriteLine(isFrench ? "Index invalide." : "Invalid index.");
+                            Console.WriteLine(isFrench ? "Saisie invalide." : "Invalid input.");
                         }
                         break;
 
@@ -138,6 +147,8 @@ namespace EasySave
         static void ExecuteCommandLine(string command, JobManager jobManager, BackupEngine engine)
         {
             List<int> indexesToRun = new List<int>();
+
+            command = command.Replace(" ", "");
 
             try
             {

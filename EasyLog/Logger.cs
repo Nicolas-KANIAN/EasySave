@@ -21,10 +21,12 @@ namespace EasyLog
 {
     public class Logger
     {
-        private readonly string _logDirectory = @"C:\EasySave\Logs";
+        private readonly string _logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
 
-        // Vérifie si le dossier existe ou non
-        public Logger()
+        private static Logger? _instance;
+        private static readonly object _lock = new object();
+
+        private Logger()
         {
             if (!Directory.Exists(_logDirectory))
             {
@@ -36,6 +38,21 @@ namespace EasyLog
         // Le fichier a comme nom la date actuelle : yyyy-MM-dd.
         // S'il exsite déjà, le contenu est relu et écrit les nouveaux logs 
         // La liste complète des logs est réécrite dans le fichier.
+        public static Logger Instance
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    if (_instance == null)
+                    {
+                        _instance = new Logger();
+                    }
+                    return _instance;
+                }
+            }
+        }
+
         public void WriteDailyLog(LogEntry entry)
         {
             string date = DateTime.Now.ToString("yyyy-MM-dd");
@@ -49,7 +66,7 @@ namespace EasyLog
                 string json = File.ReadAllText(filePath);
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    logs = JsonSerializer.Deserialize<List<LogEntry>>(json);
+                    logs = JsonSerializer.Deserialize<List<LogEntry>>(json) ?? new List<LogEntry>();
                 }
             }
 
