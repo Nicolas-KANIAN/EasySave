@@ -84,12 +84,22 @@ namespace EasySave
                         break;
 
                     case "2":
-                        Console.WriteLine("\n--- Jobs ---");
+                        if (jobManager.Jobs.Count == 0)
+                        {
+                            Console.WriteLine(isFrench ? "[INFO] Aucun travail de sauvegarde existant." : "[INFO] No existing backup jobs.");
+                            break;
+                        }
+
+                        Console.WriteLine(isFrench ? "\n=== Liste des travaux ===" : "\n=== List of Jobs ===");
                         for (int i = 0; i < jobManager.Jobs.Count; i++)
                         {
                             var j = jobManager.Jobs[i];
-                            Console.WriteLine($"[{i + 1}] {j.Name} | {j.Type} | {j.SourceDirectory} -> {j.TargetDirectory}");
+                            Console.WriteLine($"[{i + 1}] Nom : {j.Name} | Type : {j.Type}");
+                            Console.WriteLine($"    Source : {j.SourceDirectory}");
+                            Console.WriteLine($"    Cible  : {j.TargetDirectory}");
+                            Console.WriteLine(new string('-', 50));
                         }
+                        Console.WriteLine();
                         break;
 
                     case "3":
@@ -121,14 +131,14 @@ namespace EasySave
                             break;
                         }
 
-                        Console.WriteLine(isFrench ? "\n--- Travaux existants ---" : "\n--- Existing Jobs ---");
-                        Console.WriteLine(string.Format("{0,-5} | {1,-20} | {2,-15}", "Index", isFrench ? "Nom" : "Name", "Type"));
-                        Console.WriteLine(new string('-', 46));
-
+                        Console.WriteLine(isFrench ? "\n=== Travaux existants ===" : "\n=== Existing Jobs ===");
                         for (int i = 0; i < jobManager.Jobs.Count; i++)
                         {
                             var j = jobManager.Jobs[i];
-                            Console.WriteLine(string.Format("[{0,-3}] | {1,-20} | {2,-15}", i + 1, j.Name, j.Type));
+                            Console.WriteLine($"[{i + 1}] Nom : {j.Name} | Type : {j.Type}");
+                            Console.WriteLine($"    Source : {j.SourceDirectory}");
+                            Console.WriteLine($"    Cible  : {j.TargetDirectory}");
+                            Console.WriteLine(new string('-', 50));
                         }
                         Console.WriteLine();
 
