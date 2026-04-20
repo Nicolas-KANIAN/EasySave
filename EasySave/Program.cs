@@ -3,12 +3,8 @@
 *   Program.cs est le fichier principal de notre application EasySave.
 *
 *************************************************/ 
-using System;
-using System.Collections.Generic;
 using EasySave.Models;
 using EasySave.Services;
-using System;
-using System.Collections.Generic;
 
 /***********************************
 * 
@@ -58,7 +54,8 @@ namespace EasySave
                 Console.WriteLine(isFrench ? "1. Créer un travail de sauvegarde" : "1. Create a backup job");
                 Console.WriteLine(isFrench ? "2. Afficher les travaux" : "2. List backup jobs");
                 Console.WriteLine(isFrench ? "3. Lancer une sauvegarde" : "3. Run a backup job");
-                Console.WriteLine(isFrench ? "4. Quitter" : "4. Exit");
+                Console.WriteLine(isFrench ? "4. Supprimer un travail" : "4. Delete a backup job");
+                Console.WriteLine(isFrench ? "5. Quitter" : "5. Exit");
                 Console.Write("> ");
 
                 string choice = Console.ReadLine();
@@ -67,7 +64,6 @@ namespace EasySave
                 {
                     case "1":
 
-                        // Regarde le nombre de jobs pour ne pas dépasser la limite
                         if (jobManager.Jobs.Count >= 5)
                         {
                             Console.WriteLine(isFrench ? "[ERREUR] Limite de 5 travaux atteinte." : "[ERROR] Limit of 5 jobs reached.");
@@ -92,7 +88,6 @@ namespace EasySave
 
                     case "2":
 
-                        // Affiche la liste des sauvegardes
                         Console.WriteLine("\n--- Jobs ---");
                         for (int i = 0; i < jobManager.Jobs.Count; i++)
                         {
@@ -124,8 +119,45 @@ namespace EasySave
                         break;
 
                     case "4":
+                        if (jobManager.Jobs.Count == 0)
+                        {
+                            Console.WriteLine(isFrench ? "[INFO] Aucun travail de sauvegarde existant." : "[INFO] No existing backup jobs.");
+                            break;
+                        }
 
-                        //Ferme l'application
+                        Console.WriteLine(isFrench ? "\n--- Travaux existants ---" : "\n--- Existing Jobs ---");
+                        Console.WriteLine(string.Format("{0,-5} | {1,-20} | {2,-15}", "Index", isFrench ? "Nom" : "Name", "Type"));
+                        Console.WriteLine(new string('-', 46));
+                        
+                        for (int i = 0; i < jobManager.Jobs.Count; i++)
+                        {
+                            var j = jobManager.Jobs[i];
+                            Console.WriteLine(string.Format("[{0,-3}] | {1,-20} | {2,-15}", i + 1, j.Name, j.Type));
+                        }
+                        Console.WriteLine();
+
+                        Console.Write(isFrench ? "Entrez l'index à supprimer (ou 'q' pour annuler) : " : "Enter index to delete (or 'q' to cancel): ");
+                        string inputDelete = Console.ReadLine()?.Trim().ToLower();
+
+                        if (inputDelete == "q")
+                        {
+                            Console.WriteLine(isFrench ? "Suppression annulée." : "Deletion cancelled.");
+                            break;
+                        }
+
+                        if (int.TryParse(inputDelete, out int deleteIndex) && deleteIndex > 0 && deleteIndex <= jobManager.Jobs.Count)
+                        {
+                            string jobNameToDelete = jobManager.Jobs[deleteIndex - 1].Name;
+                            jobManager.DeleteJob(deleteIndex - 1);
+                            Console.WriteLine(isFrench ? $"[INFO] Travail '{jobNameToDelete}' supprimé avec succès." : $"[INFO] Job '{jobNameToDelete}' successfully deleted.");
+                        }
+                        else
+                        {
+                            Console.WriteLine(isFrench ? "[ERREUR] Index invalide." : "[ERROR] Invalid index.");
+                        }
+                        break;
+
+                    case "5":
                         isRunning = false;
                         break;
                 }

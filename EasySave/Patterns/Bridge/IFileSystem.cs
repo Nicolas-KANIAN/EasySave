@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace EasySave.Patterns.Bridge
+﻿namespace EasySave.Patterns.Bridge
 {
     public interface IFileSystem
     {

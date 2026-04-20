@@ -21,8 +21,6 @@
 *
 ******************************************/
 
-using System;
-
 namespace EasyLog
 {
     public class StateEntry

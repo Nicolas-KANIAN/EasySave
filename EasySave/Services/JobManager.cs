@@ -23,8 +23,11 @@ namespace EasySave.Services
         // et charge les jobs depuis le fichier JSON.
         public JobManager()
         {
-            string dir = Path.GetDirectoryName(_configPath);
-            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            string dir = Path.GetDirectoryName(_configPath) ?? string.Empty;
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
 
             LoadJobs();
         }
@@ -66,6 +69,15 @@ namespace EasySave.Services
             }
             Jobs.Add(newJob);
             SaveJobs();
+        }
+
+        public void DeleteJob(int index)
+        {
+            if (index >= 0 && index < Jobs.Count)
+            {
+                Jobs.RemoveAt(index);
+                SaveJobs();
+            }
         }
     }
 }

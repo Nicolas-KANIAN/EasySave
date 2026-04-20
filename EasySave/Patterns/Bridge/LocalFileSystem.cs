@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-
-namespace EasySave.Patterns.Bridge
+﻿namespace EasySave.Patterns.Bridge
 {
     public class LocalFileSystem : IFileSystem
     {

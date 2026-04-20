@@ -12,8 +12,6 @@
 *   Toutes les données sont stockées dans un fichier JSON.
 *   
 ****************************************/
-using System;
-
 namespace EasyLog
 {
     public class LogEntry
