@@ -1,6 +1,6 @@
-﻿using System;
-using EasySave.Models;
+﻿using EasySave.Models;
 using EasySave.Patterns.Strategy;
+using System;
 
 namespace EasySave.Patterns.Factory
 {

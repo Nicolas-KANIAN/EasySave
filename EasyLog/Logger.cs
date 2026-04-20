@@ -70,7 +70,7 @@ namespace EasyLog
             logs.Add(entry);
             File.WriteAllText(filePath, JsonSerializer.Serialize(logs, options));
         }
-        
+
         // Cette méthode met à jour le state.json
         // Il contient l'état actuel des sauvegardes 
         // Le contenu est entièrement réécrit à chaques mise à jour 
