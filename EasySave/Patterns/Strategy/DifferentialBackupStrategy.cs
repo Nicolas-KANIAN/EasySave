@@ -1,6 +1,4 @@
 ﻿using EasySave.Patterns.Bridge;
-using System.Collections.Generic;
-using System.IO;
 
 namespace EasySave.Patterns.Strategy
 {
