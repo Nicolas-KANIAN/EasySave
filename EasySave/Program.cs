@@ -1,32 +1,28 @@
 ﻿/************************************************
 *
-*   Program.cs est le fichier principal de notre application EasySave.
+* Program.cs est le fichier principal de notre application EasySave.
 *
 *************************************************/
+
 using EasySave.Models;
 using EasySave.Services;
-using System;
-using System.Collections.Generic;
 
 /***********************************
-* 
-*   La classe Program permet de créer les objets nécessaires à la gestion et l'exécution des sauvegardes,
-*   Elle permet aussi d'afficher le menu dans la console, permet à l'utilisateur de créer, afficher
-*   et lancer la sauvegarde des travaux et aussi elle interprète les arguments de la ligne de commande
-*   pour exécuter plusieurs sauvegarde.
-* 
-***********************************/
+* * La classe Program permet de créer les objets nécessaires à la gestion et l'exécution des sauvegardes.
+* Elle permet aussi d'afficher le menu dans la console, permet à l'utilisateur de créer, afficher
+* et lancer la sauvegarde des travaux et aussi elle interprète les arguments de la ligne de commande
+* pour exécuter plusieurs sauvegardes.
+* ***********************************/
 namespace EasySave
 {
     class Program
     {
-
         /****************************************
         *
-        *   Méthode principale de la classe.
-        *   La méthode crée : 
-        *       - JobManager pour gérer les backup des sauvegardes 
-        *       - BackupEngine pour éxecuter les sauvegardes 
+        * Méthode principale de la classe.
+        * La méthode crée : 
+        * - JobManager pour gérer les backup des sauvegardes 
+        * - BackupEngine pour éxecuter les sauvegardes 
         *
         ****************************************/
         static void Main(string[] args)
@@ -65,7 +61,6 @@ namespace EasySave
                 switch (choice)
                 {
                     case "1":
-
                         if (jobManager.Jobs.Count >= 5)
                         {
                             Console.WriteLine(isFrench ? "[ERREUR] Limite de 5 travaux atteinte." : "[ERROR] Limit of 5 jobs reached.");
@@ -76,10 +71,10 @@ namespace EasySave
                         string name = Console.ReadLine();
 
                         Console.Write(isFrench ? "Répertoire Source (ex: C:\\Dossier) : " : "Source Directory (e.g., C:\\Folder): ");
-                        string source = Console.ReadLine().Trim('"');
+                        string source = Console.ReadLine()?.Trim('"');
 
                         Console.Write(isFrench ? "Répertoire Cible (ex: D:\\Backup) : " : "Target Directory (e.g., D:\\Backup): ");
-                        string target = Console.ReadLine().Trim('"');
+                        string target = Console.ReadLine()?.Trim('"');
 
                         Console.Write(isFrench ? "Type (0 = Complet, 1 = Différentiel) : " : "Type (0 = Full, 1 = Differential): ");
                         BackupType type = Console.ReadLine() == "0" ? BackupType.Full : BackupType.Differential;
@@ -89,7 +84,6 @@ namespace EasySave
                         break;
 
                     case "2":
-
                         Console.WriteLine("\n--- Jobs ---");
                         for (int i = 0; i < jobManager.Jobs.Count; i++)
                         {
@@ -130,7 +124,7 @@ namespace EasySave
                         Console.WriteLine(isFrench ? "\n--- Travaux existants ---" : "\n--- Existing Jobs ---");
                         Console.WriteLine(string.Format("{0,-5} | {1,-20} | {2,-15}", "Index", isFrench ? "Nom" : "Name", "Type"));
                         Console.WriteLine(new string('-', 46));
-                        
+
                         for (int i = 0; i < jobManager.Jobs.Count; i++)
                         {
                             var j = jobManager.Jobs[i];
@@ -166,16 +160,14 @@ namespace EasySave
             }
         }
 
-
         /**************************************
         *
-        *   La méthode ExecuteCommandLine interpète les commande passé en argument
-        *   par l'utilisateur. 
-        *   
-        *   Elle permet d'éxecuter une ou plusieurs sauvegarde :
-        *       - un seul index : "1"
-        *       - un interval d'index : "1-3"
-        *       - plusieurs indexs : "1;3"
+        * La méthode ExecuteCommandLine interprète les commandes passées en argument
+        * par l'utilisateur. 
+        * * Elle permet d'éxecuter une ou plusieurs sauvegardes :
+        * - un seul index : "1"
+        * - un intervalle d'index : "1-3"
+        * - plusieurs index : "1;3"
         *
         **************************************/
         static void ExecuteCommandLine(string command, JobManager jobManager, BackupEngine engine)
