@@ -5,8 +5,8 @@
 *
 **********************************/
 
-using Xunit;
 using EasySave.Models;
+using Xunit;
 
 namespace EasySave.Tests
 {
