@@ -1,12 +1,30 @@
-﻿using EasySave.Models;
-using EasySave.Services;
-using System;
-using System.Collections.Generic;
+﻿/************************************************
+*
+* Program.cs est le fichier principal de notre application EasySave.
+*
+*************************************************/
 
+using EasySave.Models;
+using EasySave.Services;
+
+/***********************************
+* * La classe Program permet de créer les objets nécessaires à la gestion et l'exécution des sauvegardes.
+* Elle permet aussi d'afficher le menu dans la console, permet à l'utilisateur de créer, afficher
+* et lancer la sauvegarde des travaux et aussi elle interprète les arguments de la ligne de commande
+* pour exécuter plusieurs sauvegardes.
+* ***********************************/
 namespace EasySave
 {
     class Program
     {
+        /****************************************
+        *
+        * Méthode principale de la classe.
+        * La méthode crée : 
+        * - JobManager pour gérer les backup des sauvegardes 
+        * - BackupEngine pour éxecuter les sauvegardes 
+        *
+        ****************************************/
         static void Main(string[] args)
         {
             JobManager jobManager = new JobManager();
@@ -14,10 +32,12 @@ namespace EasySave
 
             if (args.Length > 0)
             {
-                ExecuteCommandLine(args[0], jobManager, engine);
+                string command = string.Join("", args);
+                ExecuteCommandLine(command, jobManager, engine);
                 return;
             }
 
+            // Demande la langue 
             Console.WriteLine("Choose language / Choisissez la langue :");
             Console.WriteLine("1. English");
             Console.WriteLine("2. Français");
@@ -27,11 +47,13 @@ namespace EasySave
             bool isRunning = true;
             while (isRunning)
             {
+                // Affiche le menu
                 Console.WriteLine(isFrench ? "\n=== Menu EasySave ===" : "\n=== EasySave Menu ===");
                 Console.WriteLine(isFrench ? "1. Créer un travail de sauvegarde" : "1. Create a backup job");
                 Console.WriteLine(isFrench ? "2. Afficher les travaux" : "2. List backup jobs");
                 Console.WriteLine(isFrench ? "3. Lancer une sauvegarde" : "3. Run a backup job");
-                Console.WriteLine(isFrench ? "4. Quitter" : "4. Exit");
+                Console.WriteLine(isFrench ? "4. Supprimer un travail" : "4. Delete a backup job");
+                Console.WriteLine(isFrench ? "5. Quitter" : "5. Exit");
                 Console.Write("> ");
 
                 string choice = Console.ReadLine();
@@ -49,10 +71,10 @@ namespace EasySave
                         string name = Console.ReadLine();
 
                         Console.Write(isFrench ? "Répertoire Source (ex: C:\\Dossier) : " : "Source Directory (e.g., C:\\Folder): ");
-                        string source = Console.ReadLine().Trim('"');
+                        string source = Console.ReadLine()?.Trim('"');
 
                         Console.Write(isFrench ? "Répertoire Cible (ex: D:\\Backup) : " : "Target Directory (e.g., D:\\Backup): ");
-                        string target = Console.ReadLine().Trim('"');
+                        string target = Console.ReadLine()?.Trim('"');
 
                         Console.Write(isFrench ? "Type (0 = Complet, 1 = Différentiel) : " : "Type (0 = Full, 1 = Differential): ");
                         BackupType type = Console.ReadLine() == "0" ? BackupType.Full : BackupType.Differential;
@@ -71,27 +93,88 @@ namespace EasySave
                         break;
 
                     case "3":
-                        Console.Write(isFrench ? "Entrez l'index du travail (ex: 1) : " : "Enter job index (e.g., 1): ");
-                        if (int.TryParse(Console.ReadLine(), out int index) && index > 0 && index <= jobManager.Jobs.Count)
+                        Console.Write(isFrench ? "Entrez l'index (1-5) ou 'all' pour tout lancer : " : "Enter job index (1-5) or 'all' to run all: ");
+                        string input = Console.ReadLine()?.Trim().ToLower();
+
+                        if (input == "all")
+                        {
+                            Console.WriteLine(isFrench ? "[INFO] Lancement séquentiel de tous les travaux..." : "[INFO] Sequential execution of all jobs...");
+                            foreach (var job in jobManager.Jobs)
+                            {
+                                engine.ExecuteJob(job);
+                            }
+                        }
+                        else if (int.TryParse(input, out int index) && index > 0 && index <= jobManager.Jobs.Count)
                         {
                             engine.ExecuteJob(jobManager.Jobs[index - 1]);
                         }
                         else
                         {
-                            Console.WriteLine(isFrench ? "Index invalide." : "Invalid index.");
+                            Console.WriteLine(isFrench ? "Saisie invalide." : "Invalid input.");
                         }
                         break;
 
                     case "4":
+                        if (jobManager.Jobs.Count == 0)
+                        {
+                            Console.WriteLine(isFrench ? "[INFO] Aucun travail de sauvegarde existant." : "[INFO] No existing backup jobs.");
+                            break;
+                        }
+
+                        Console.WriteLine(isFrench ? "\n--- Travaux existants ---" : "\n--- Existing Jobs ---");
+                        Console.WriteLine(string.Format("{0,-5} | {1,-20} | {2,-15}", "Index", isFrench ? "Nom" : "Name", "Type"));
+                        Console.WriteLine(new string('-', 46));
+
+                        for (int i = 0; i < jobManager.Jobs.Count; i++)
+                        {
+                            var j = jobManager.Jobs[i];
+                            Console.WriteLine(string.Format("[{0,-3}] | {1,-20} | {2,-15}", i + 1, j.Name, j.Type));
+                        }
+                        Console.WriteLine();
+
+                        Console.Write(isFrench ? "Entrez l'index à supprimer (ou 'q' pour annuler) : " : "Enter index to delete (or 'q' to cancel): ");
+                        string inputDelete = Console.ReadLine()?.Trim().ToLower();
+
+                        if (inputDelete == "q")
+                        {
+                            Console.WriteLine(isFrench ? "Suppression annulée." : "Deletion cancelled.");
+                            break;
+                        }
+
+                        if (int.TryParse(inputDelete, out int deleteIndex) && deleteIndex > 0 && deleteIndex <= jobManager.Jobs.Count)
+                        {
+                            string jobNameToDelete = jobManager.Jobs[deleteIndex - 1].Name;
+                            jobManager.DeleteJob(deleteIndex - 1);
+                            Console.WriteLine(isFrench ? $"[INFO] Travail '{jobNameToDelete}' supprimé avec succès." : $"[INFO] Job '{jobNameToDelete}' successfully deleted.");
+                        }
+                        else
+                        {
+                            Console.WriteLine(isFrench ? "[ERREUR] Index invalide." : "[ERROR] Invalid index.");
+                        }
+                        break;
+
+                    case "5":
                         isRunning = false;
                         break;
                 }
             }
         }
 
+        /**************************************
+        *
+        * La méthode ExecuteCommandLine interprète les commandes passées en argument
+        * par l'utilisateur. 
+        * * Elle permet d'éxecuter une ou plusieurs sauvegardes :
+        * - un seul index : "1"
+        * - un intervalle d'index : "1-3"
+        * - plusieurs index : "1;3"
+        *
+        **************************************/
         static void ExecuteCommandLine(string command, JobManager jobManager, BackupEngine engine)
         {
             List<int> indexesToRun = new List<int>();
+
+            command = command.Replace(" ", "");
 
             try
             {
