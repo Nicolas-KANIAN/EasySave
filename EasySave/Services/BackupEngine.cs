@@ -1,56 +1,61 @@
-﻿using EasyLog;
+﻿using System.Diagnostics;
+using EasyLog;
 using EasySave.Models;
-using System.Diagnostics;
+using EasySave.Patterns.Bridge;
+using EasySave.Patterns.Factory;
+using EasySave.Patterns.Observer;
+using EasySave.Patterns.Strategy;
 
 namespace EasySave.Services
 {
     public class BackupEngine
     {
-        private Logger _logger;
+        private readonly IFileSystem _fileSystem;
+        private readonly List<IBackupObserver> _observers;
 
         public BackupEngine()
         {
-            _logger = new Logger();
+            _fileSystem = new LocalFileSystem();
+            _observers = new List<IBackupObserver>();
+
+            AttachObserver(new StateLoggerObserver());
+        }
+
+        public void AttachObserver(IBackupObserver observer)
+        {
+            _observers.Add(observer);
+        }
+
+        private void NotifyObservers(StateEntry state)
+        {
+            foreach (var observer in _observers)
+            {
+                observer.Update(state);
+            }
         }
 
         public void ExecuteJob(BackupJob job)
         {
             Console.WriteLine($"\n[INFO] Starting backup job: {job.Name} ({job.Type})");
 
-            if (!Directory.Exists(job.SourceDirectory))
+            if (!_fileSystem.DirectoryExists(job.SourceDirectory))
             {
                 Console.WriteLine($"[ERROR] Source directory does not exist: {job.SourceDirectory}");
                 return;
             }
 
-            if (!Directory.Exists(job.TargetDirectory))
+            if (!_fileSystem.DirectoryExists(job.TargetDirectory))
             {
-                Directory.CreateDirectory(job.TargetDirectory);
+                _fileSystem.CreateDirectory(job.TargetDirectory);
             }
 
-            var allFiles = GetFilesRecursive(job.SourceDirectory);
-            var filesToCopy = new List<string>();
+            var allFiles = _fileSystem.GetFilesRecursive(job.SourceDirectory);
 
-            foreach (var file in allFiles)
-            {
-                string relativePath = file.Substring(job.SourceDirectory.Length + 1);
-                string targetFile = Path.Combine(job.TargetDirectory, relativePath);
-
-                if (job.Type == BackupType.Full)
-                {
-                    filesToCopy.Add(file);
-                }
-                else if (job.Type == BackupType.Differential)
-                {
-                    if (!File.Exists(targetFile) || File.GetLastWriteTime(file) > File.GetLastWriteTime(targetFile))
-                    {
-                        filesToCopy.Add(file);
-                    }
-                }
-            }
+            IBackupStrategy strategy = BackupFactory.CreateStrategy(job.Type);
+            var filesToCopy = strategy.GetFilesToCopy(job.SourceDirectory, job.TargetDirectory, allFiles, _fileSystem);
 
             int totalFiles = filesToCopy.Count;
-            long totalSize = filesToCopy.Sum(f => new FileInfo(f).Length);
+            long totalSize = filesToCopy.Sum(f => _fileSystem.GetFileSize(f));
 
             if (totalFiles == 0)
             {
@@ -67,6 +72,7 @@ namespace EasySave.Services
                 TotalFilesToCopy = totalFiles,
                 TotalFilesSize = totalSize,
                 NbFilesLeftToDo = totalFiles,
+                RemainingFilesSize = totalSize,
                 Progression = 0
             };
 
@@ -74,11 +80,13 @@ namespace EasySave.Services
             {
                 string relativePath = sourceFile.Substring(job.SourceDirectory.Length + 1);
                 string targetFile = Path.Combine(job.TargetDirectory, relativePath);
-                string targetDir = Path.GetDirectoryName(targetFile);
+                string targetDir = Path.GetDirectoryName(targetFile) ?? string.Empty;
 
-                if (!Directory.Exists(targetDir)) Directory.CreateDirectory(targetDir);
+                if (!_fileSystem.DirectoryExists(targetDir))
+                {
+                    _fileSystem.CreateDirectory(targetDir);
+                }
 
-                FileInfo fileInfo = new FileInfo(sourceFile);
                 currentState.CurrentSourceFile = sourceFile;
                 currentState.CurrentTargetFile = targetFile;
 
@@ -86,57 +94,38 @@ namespace EasySave.Services
 
                 try
                 {
-                    File.Copy(sourceFile, targetFile, true);
+                    long currentFileSize = _fileSystem.GetFileSize(sourceFile);
+
+                    _fileSystem.CopyFile(sourceFile, targetFile, true);
                     sw.Stop();
                     filesCopied++;
 
                     currentState.NbFilesLeftToDo = totalFiles - filesCopied;
+                    currentState.RemainingFilesSize -= currentFileSize;
                     currentState.Progression = (int)((double)filesCopied / totalFiles * 100);
-                    _logger.UpdateState(new List<StateEntry> { currentState });
+
+                    NotifyObservers(currentState);
 
                     LogEntry log = new LogEntry
                     {
                         BackupName = job.Name,
                         SourceFile = sourceFile,
                         TargetFile = targetFile,
-                        FileSize = fileInfo.Length,
+                        FileSize = currentFileSize,
                         TransferTime = sw.ElapsedMilliseconds
                     };
-                    _logger.WriteDailyLog(log);
+                    Logger.Instance.WriteDailyLog(log);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"[ERROR] Failed to copy {sourceFile}: {ex.Message}");
-                    LogEntry errorLog = new LogEntry
-                    {
-                        BackupName = job.Name,
-                        SourceFile = sourceFile,
-                        TargetFile = targetFile,
-                        FileSize = fileInfo.Length,
-                        TransferTime = -1
-                    };
-                    _logger.WriteDailyLog(errorLog);
                 }
             }
 
             currentState.State = "INACTIVE";
-            _logger.UpdateState(new List<StateEntry> { currentState });
+            currentState.RemainingFilesSize = 0;
+            NotifyObservers(currentState);
             Console.WriteLine($"[INFO] Backup {job.Name} finished successfully.");
-        }
-
-        private List<string> GetFilesRecursive(string directory)
-        {
-            var files = new List<string>();
-            try
-            {
-                files.AddRange(Directory.GetFiles(directory));
-                foreach (var dir in Directory.GetDirectories(directory))
-                {
-                    files.AddRange(GetFilesRecursive(dir));
-                }
-            }
-            catch (UnauthorizedAccessException) { }
-            return files;
         }
     }
 }
