@@ -2,9 +2,11 @@
 *
 *   Program.cs est le fichier principal de notre application EasySave.
 *
-*************************************************/ 
+*************************************************/
 using EasySave.Models;
 using EasySave.Services;
+using System;
+using System.Collections.Generic;
 
 /***********************************
 * 
@@ -26,7 +28,7 @@ namespace EasySave
         *       - JobManager pour gérer les backup des sauvegardes 
         *       - BackupEngine pour éxecuter les sauvegardes 
         *
-        ****************************************/ 
+        ****************************************/
         static void Main(string[] args)
         {
             JobManager jobManager = new JobManager();

@@ -1,10 +1,10 @@
-﻿using System.Diagnostics;
-using EasyLog;
+﻿using EasyLog;
 using EasySave.Models;
 using EasySave.Patterns.Bridge;
 using EasySave.Patterns.Factory;
 using EasySave.Patterns.Observer;
 using EasySave.Patterns.Strategy;
+using System.Diagnostics;
 
 namespace EasySave.Services
 {
