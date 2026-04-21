@@ -4,6 +4,8 @@ namespace EasySave.Patterns.Strategy
 {
     public class DifferentialBackupStrategy : IBackupStrategy
     {
+        // Concrete strategy for differential backups.
+        // Filters the file list to include only new files or files modified since the last backup in the target directory.
         public List<string> GetFilesToCopy(string sourceDirectory, string targetDirectory, List<string> allFiles, IFileSystem fileSystem)
         {
             var filesToCopy = new List<string>();

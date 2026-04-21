@@ -8,6 +8,8 @@ using System.Diagnostics;
 
 namespace EasySave.Services
 {
+    // The core execution engine responsible for managing the backup lifecycle.
+    // It coordinates file system operations, applies backup strategies and notifies observers about real-time progress.
     public class BackupEngine
     {
         private readonly IFileSystem _fileSystem;
@@ -21,11 +23,13 @@ namespace EasySave.Services
             AttachObserver(new StateLoggerObserver());
         }
 
+        // Registers a new observer to receive backup progress updates.
         public void AttachObserver(IBackupObserver observer)
         {
             _observers.Add(observer);
         }
 
+        // Notifies all registered observers of the current state (Observer Pattern).
         private void NotifyObservers(StateEntry state)
         {
             foreach (var observer in _observers)
@@ -34,6 +38,7 @@ namespace EasySave.Services
             }
         }
 
+        // Executes a specific backup job by filtering files, copying them, and logging results.
         public void ExecuteJob(BackupJob job)
         {
             Console.WriteLine($"\n[INFO] Starting backup job: {job.Name} ({job.Type})");
@@ -51,6 +56,7 @@ namespace EasySave.Services
 
             var allFiles = _fileSystem.GetFilesRecursive(job.SourceDirectory);
 
+            // Strategy Pattern: Decides which files to copy based on the job type (Full or Differential)
             IBackupStrategy strategy = BackupFactory.CreateStrategy(job.Type);
             var filesToCopy = strategy.GetFilesToCopy(job.SourceDirectory, job.TargetDirectory, allFiles, _fileSystem);
 
@@ -65,6 +71,7 @@ namespace EasySave.Services
 
             int filesCopied = 0;
 
+            // Initialize the real-time state entry
             StateEntry currentState = new StateEntry
             {
                 Name = job.Name,
@@ -122,6 +129,7 @@ namespace EasySave.Services
                 }
             }
 
+            // Mark job as finished and notify observers one last time
             currentState.State = "INACTIVE";
             currentState.RemainingFilesSize = 0;
             NotifyObservers(currentState);
