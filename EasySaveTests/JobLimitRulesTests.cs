@@ -1,16 +1,31 @@
 ﻿using EasySave.Models;
 using EasySave.Services;
+using System;
+using System.IO;
+using Xunit;
 
 namespace EasySave.Tests.Services
 {
-    public class JobLimitRulesTests
+    public class JobLimitRulesTests : IDisposable
     {
+        private readonly string _testFilePath;
+
+        public JobLimitRulesTests()
+        {
+            _testFilePath = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "jobs.json");
+            CleanUp();
+        }
+
+        public void Dispose()
+        {
+            CleanUp();
+        }
+
         private void CleanUp()
         {
-            string path = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "jobs.json");
-            if (File.Exists(path))
+            if (File.Exists(_testFilePath))
             {
-                File.Delete(path);
+                File.Delete(_testFilePath);
             }
         }
 
@@ -18,21 +33,18 @@ namespace EasySave.Tests.Services
         [Fact]
         public void CreateJob_ShouldAddJob_WhenLimitNotReached()
         {
-            CleanUp();
             var manager = new JobManager();
             manager.Jobs.Clear();
 
             manager.CreateJob(new BackupJob("TestJob", "C:\\Src", "D:\\Dest", BackupType.Full));
 
             Assert.Single(manager.Jobs);
-            CleanUp();
         }
 
         // Tests the strict business rule that prevents the creation of more than 5 backup jobs simultaneously.
         [Fact]
         public void CreateJob_ShouldNotExceedLimitOfFive()
         {
-            CleanUp();
             var manager = new JobManager();
             manager.Jobs.Clear();
 
@@ -42,14 +54,12 @@ namespace EasySave.Tests.Services
             }
 
             Assert.Equal(5, manager.Jobs.Count);
-            CleanUp();
         }
 
         // Ensures that an existing backup job is successfully removed from the list when a valid index is provided.
         [Fact]
         public void DeleteJob_ShouldRemoveJob_WhenIndexIsValid()
         {
-            CleanUp();
             var manager = new JobManager();
             manager.Jobs.Clear();
             manager.CreateJob(new BackupJob("To Delete", "C:\\Src", "D:\\Dest", BackupType.Full));
@@ -57,14 +67,12 @@ namespace EasySave.Tests.Services
             manager.DeleteJob(0);
 
             Assert.Empty(manager.Jobs);
-            CleanUp();
         }
 
         // Verifies the system's robustness by ensuring no application crash occurs when attempting to delete a job using an out-of-bounds or invalid index.
         [Fact]
         public void DeleteJob_ShouldNotCrash_WhenIndexIsInvalid()
         {
-            CleanUp();
             var manager = new JobManager();
             manager.Jobs.Clear();
             manager.CreateJob(new BackupJob("Job1", "C:\\Src", "D:\\Dest", BackupType.Full));
@@ -75,7 +83,6 @@ namespace EasySave.Tests.Services
             Assert.Null(exception1);
             Assert.Null(exception2);
             Assert.Single(manager.Jobs);
-            CleanUp();
         }
     }
 }

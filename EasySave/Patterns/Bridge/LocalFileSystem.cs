@@ -2,6 +2,8 @@
 {
     public class LocalFileSystem : IFileSystem
     {
+        // Concrete implementation of IFileSystem. 
+        // Executes actual file and folder operations on the local physical drive using System.IO.
         public bool DirectoryExists(string path) => Directory.Exists(path);
         public void CreateDirectory(string path) => Directory.CreateDirectory(path);
         public bool FileExists(string path) => File.Exists(path);
