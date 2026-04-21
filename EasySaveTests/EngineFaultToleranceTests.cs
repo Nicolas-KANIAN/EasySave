@@ -1,8 +1,5 @@
-﻿using Xunit;
-using EasySave.Models;
+﻿using EasySave.Models;
 using EasySave.Services;
-using System;
-using System.IO;
 
 namespace EasySave.Tests.Services
 {

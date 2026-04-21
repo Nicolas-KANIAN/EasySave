@@ -1,5 +1,4 @@
-﻿using Xunit;
-using EasyLog;
+﻿using EasyLog;
 
 namespace EasySave.Tests.EasyLogTests
 {
