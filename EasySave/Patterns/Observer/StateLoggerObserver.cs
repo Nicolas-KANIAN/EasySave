@@ -1,5 +1,4 @@
 ﻿using EasyLog;
-using System.Collections.Generic;
 
 namespace EasySave.Patterns.Observer
 {
