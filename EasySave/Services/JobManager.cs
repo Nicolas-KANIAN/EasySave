@@ -1,26 +1,15 @@
-﻿/********************************
-*
-*   La classe JobManager gère la configurations des sauvegardes.
-*   Elle doit : 
-*   - Charger les jobs du fichier JSON.
-*   - Les sauvegarder .
-*   - Ajouter des nouveaux jobs de backups.
-*
-* 
-*********************************/
-
-using EasySave.Models;
+﻿using EasySave.Models;
 using System.Text.Json;
 
 namespace EasySave.Services
 {
+    // Manages the configuration and persistence of backup jobs.
+    // Handles loading/saving from JSON and enforces business rules like the 5-job limit.
     public class JobManager
     {
         private readonly string _configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "jobs.json");
         public List<BackupJob> Jobs { get; private set; }
 
-        // Constructeur, crée le dossier de configuration si besoin
-        // et charge les jobs depuis le fichier JSON.
         public JobManager()
         {
             string dir = Path.GetDirectoryName(_configPath) ?? string.Empty;
@@ -32,10 +21,8 @@ namespace EasySave.Services
             LoadJobs();
         }
 
-
-        // LoadJobs() permet de charger les jobs depuis le fichiers de configuration.
-        // Si le fichier existe, le JSON est lu et son contenu est converti en liste de BackupJob,
-        // sinon il crée une liste vide.
+        // Reads backup jobs from the JSON configuration file. 
+        // Initializes an empty list if the file does not exist.
         public void LoadJobs()
         {
             if (File.Exists(_configPath))
@@ -49,18 +36,15 @@ namespace EasySave.Services
             }
         }
 
-
-        // SaveJobs() enregsitre la liste actuelle des jobs
-        // dans le fichier de configuration en JSON.
+        // Serializes and saves the current list of backup jobs to the configuration file.
         public void SaveJobs()
         {
             var options = new JsonSerializerOptions { WriteIndented = true };
             File.WriteAllText(_configPath, JsonSerializer.Serialize(Jobs, options));
         }
 
-        // CreateJobs() ajoute un nouveau travail dans la liste.
-        // Si il y a 5 jobs, alors l'ajout est ignoré.
-        // Sinon il est ajouté dans le fihcier JSON.
+        // Adds a new backup job if the maximum limit of 5 is not reached.
+        // Automatically persists changes to the JSON file.
         public void CreateJob(BackupJob newJob)
         {
             if (Jobs.Count >= 5)
@@ -71,6 +55,7 @@ namespace EasySave.Services
             SaveJobs();
         }
 
+        // Removes a job by its index and updates the configuration file.
         public void DeleteJob(int index)
         {
             if (index >= 0 && index < Jobs.Count)
