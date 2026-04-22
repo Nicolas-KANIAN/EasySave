@@ -32,7 +32,7 @@ namespace EasySave
             while (isRunning)
             {
                 // Main Menu UI
-                Console.WriteLine(isFrench ? "\n=== Menu EasySave ===" : "\n=== EasySave Menu ===");
+                Console.WriteLine(isFrench ? "\n=== Menu EasySave Version Console ===" : "\n=== EasySave Menu Console Version ===");
                 Console.WriteLine(isFrench ? "1. Créer un travail de sauvegarde" : "1. Create a backup job");
                 Console.WriteLine(isFrench ? "2. Afficher les travaux" : "2. List backup jobs");
                 Console.WriteLine(isFrench ? "3. Lancer une sauvegarde" : "3. Run a backup job");
