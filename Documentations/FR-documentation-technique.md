@@ -13,7 +13,7 @@ Ce document contient les informations techniques nécessaires pour l'installatio
 
 **Outils et Méthodes :**
 - **IDE & Versionning** : Visual Studio / GitHub
-- **Revue de code par IA** : **CodeRabbit** intégré au dépôt GitHub. À chaque Pull Request, l'IA vérifie le respect des standards (100 % anglais, absence de chemins codés en dur), détecte les redondances et propose des refactorisations. *(Source : [Configuration CodeRabbit](https://docs.coderabbit.ai/reference/configuration))*
+- **Revue de code par IA** : **CodeRabbit** intégré au dépôt GitHub. À chaque Pull Request, l'IA est utilisée uniquement pour générer un résumé automatique des changements apportés. *(Source : [Configuration CodeRabbit](https://docs.coderabbit.ai/reference/configuration))*
 - **Tests unitaires** : **xUnit** *(Source : [Documentation xUnit](https://xunit.net/?tabs=cs))*
 - **Formatage du code** : `.editorconfig`
 
@@ -34,7 +34,7 @@ L'application est portable. Tous les fichiers de configuration et de logs sont s
 ### Configuration Générale (`config.json`)
 - **Emplacement** : `<Dossier_Application>/EasyLogs/config.json`
 - **Paramètres globaux** :
-  - `LogFormat` : Format d'écriture des fichiers de logs (`Json` ou `Xml`).
+  - `LogFormat` : Format d'écriture des fichiers de logs (`.Json`).
   - `Language` : Langue de l'interface console (`en` ou `fr`).
 
 ### Configuration des Travaux (`jobs.json`)
@@ -43,12 +43,12 @@ L'application est portable. Tous les fichiers de configuration et de logs sont s
 - **Règle Métier** : Limité techniquement à 5 travaux maximum. Si ce fichier est supprimé, la liste sera vide au prochain lancement.
 
 ### Journaux d'Activité (`DailyLog_{date}`)
-- **Emplacement** : `<Dossier_Application>/EasyLogs/DailyLog_{dd_MM_yyyy}.json` (ou `.xml`)
+- **Emplacement** : `<Dossier_Application>/EasyLogs/DailyLog_{dd_MM_yyyy}.json`
 - **Format** : Un fichier par jour généré par la DLL `EasyLog`.
 - **Contenu** : Détail de chaque transfert (`Timestamp`, `Name`, `Source`, `Target`, `FileSize`, `TransferTimeMs`).
 
 ### Fichier d'État temps réel (`state.json`)
-- **Emplacement** : `<Dossier_Application>/EasyLogs/state.json` (ou `.xml`)
+- **Emplacement** : `<Dossier_Application>/EasyLogs/state.json`
 - **Contenu** : État d'avancement du travail en cours (`Progression`, `TotalFilesToCopy`, `NbFilesLeftToDo`, `RemainingFilesSize`, `State`).
 - **Comportement** : Réécrit dynamiquement à chaque transfert de fichier.
 
@@ -74,7 +74,7 @@ Afin de documenter la conception technique et fonctionnelle de l'application, no
 **1. Diagramme de Cas d'Utilisation (Use Case)**  
 Définit les interactions possibles entre l'utilisateur et le système (Création, Lancement, Suppression de travaux).
 
-![Diagramme de Cas d'Utilisation](<./assets/Usecase Diagram V.1.0.png>)
+<img src="./assets/Usecase Diagram V.1.0.png" alt="Diagramme de Cas d'Utilisation" width="600" />
 
 **2. Diagramme d'Activité**  
 Détaille le flux d'exécution logique du moteur lorsqu'une sauvegarde est lancée.
@@ -94,13 +94,32 @@ Représente l'architecture statique détaillée de l'application et de ses Desig
 
 ### Implémentation des Design Patterns
 
-| Pattern | Problème technique résolu | Solution apportée dans l'architecture |
-| :--- | :--- | :--- |
-| **Strategy** | Éviter de polluer le moteur de sauvegarde avec des algorithmes mathématiques complexes. | Encapsulation de chaque algorithme (`Full`, `Differential`) dans sa propre classe via l'interface `IBackupStrategy`. |
-| **Observer** | Mettre à jour `state.json` en temps réel sans rendre le moteur dépendant du système de logs. | Le moteur "diffuse" son état (`NotifyObservers`). `StateLoggerObserver` écoute et écrit sans impacter le moteur. |
-| **Singleton** | Éviter les crashs d'accès concurrents (File Lock) lors de l'écriture des fichiers de logs. | La classe `Logger` garantit une instance unique sécurisée par un mécanisme de verrouillage (`lock`). |
-| **Factory** | Simplifier l'instanciation des stratégies sans multiplier les `if/switch` dans le moteur. | `BackupFactory` génère et retourne dynamiquement le bon algorithme en fonction du type demandé par l'utilisateur. |
-| **Bridge** | Permettre les tests unitaires sans créer de vrais fichiers physiques sur le disque dur. | Création d'une interface `IFileSystem` agissant comme un pont, permettant d'injecter des "Mocks" en phase de test. |
+L'architecture a été pensée pour garantir un code robuste, évolutif et testable. Nous avons implémenté plusieurs Design Patterns pour résoudre des problématiques techniques précises et respecter les principes de la programmation orientée objet.
+
+#### 1. Le Singleton : Sécuriser l'accès aux fichiers (Thread-Safety)
+* **Composant concerné :** `Logger`
+* **Problème technique :** Si deux travaux de sauvegarde se terminent à la même milliseconde et tentent d'écrire simultanément dans le même fichier journal (`DailyLog_xxx.json`), le système d'exploitation bloquera l'accès (File Lock), provoquant un crash de l'application.
+* **Solution apportée :** Le Singleton garantit qu'il n'existe qu'une seule et unique instance du `Logger` en mémoire. Associé à un mécanisme de verrouillage (`lock`), il agit comme un goulot d'étranglement sécurisé : toutes les requêtes d'écriture sont traitées de manière séquentielle, évitant absolument tout conflit d'accès concurrent.
+
+#### 2. L'Observer : Découpler le moteur de l'interface et des logs
+* **Composants concernés :** `IBackupObserver`, `StateLoggerObserver`
+* **Problème technique :** Le moteur de sauvegarde (`BackupEngine`) a une seule responsabilité : copier des fichiers de manière fiable. S'il devait formater du JSON pour mettre à jour le fichier d'état en temps réel (`state.json`), il serait surchargé et fortement couplé au système de logging.
+* **Solution apportée :** Le moteur se contente de "diffuser" son avancement à chaque étape d'une copie (`NotifyObservers`). L'observateur (`StateLoggerObserver`) écoute ces notifications et se charge de l'écriture sur le disque. Le moteur reste léger, rapide, et ignore totalement comment ces informations sont traitées.
+
+#### 3. La Strategy : Isoler la logique algorithmique (Le "Comment")
+* **Composants concernés :** `IBackupStrategy`, `FullBackupStrategy`, `DifferentialBackupStrategy`
+* **Problème technique :** Gérer les différences de logique entre une sauvegarde complète et différentielle directement dans le moteur entraînerait des conditions complexes (`if/switch`) et violerait le principe Ouvert/Fermé (Open/Closed) de SOLID.
+* **Solution apportée :** Chaque algorithme de calcul des fichiers à copier est encapsulé dans sa propre classe. Le moteur demande simplement à la stratégie : *"Voici le dossier source, donne-moi la liste des fichiers à copier"*, sans se soucier des mathématiques internes. Ajouter un nouveau type de sauvegarde à l'avenir ne nécessitera aucune modification du moteur central.
+
+#### 4. La Factory : Centraliser la création des objets (Le "Qui")
+* **Composant concerné :** `BackupFactory`
+* **Problème technique :** Bien que le moteur sache utiliser une `Strategy`, il ne sait pas comment instancier concrètement la bonne classe (Complète ou Différentielle) à partir de la configuration choisie par l'utilisateur (enum `BackupType`).
+* **Solution apportée :** La Factory analyse le type de sauvegarde demandé et instancie dynamiquement l'outil adéquat. Le moteur confie la création de l'algorithme à la Factory, puis l'utilise via l'interface `IBackupStrategy`. Le `BackupEngine` devient ainsi totalement générique et aveugle à la complexité de création des objets.
+
+#### 5. Le Bridge / (Inversion de Dépendance) : Rendre le système testable
+* **Composants concernés :** `IFileSystem`, `LocalFileSystem`
+* **Problème technique :** Les classes natives de .NET (`System.IO.File`, `Directory`) interagissent directement avec le disque dur. Cela rend les tests unitaires lents et dangereux, car ils nécessiteraient de créer et supprimer de vrais fichiers physiques.
+* **Solution apportée :** Création d'une interface `IFileSystem` agissant comme une couche d'abstraction (Wrapper). En production, le moteur utilise `LocalFileSystem` (le vrai disque). En phase de test (xUnit), cette abstraction nous permet d'injecter des "Mocks" (un faux système de fichiers simulé en mémoire vive), garantissant des tests ultra-rapides, sûrs et isolés du système d'exploitation.
 
 ### Respect des Principes SOLID
 

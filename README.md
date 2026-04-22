@@ -2,11 +2,9 @@
 
 🇬🇧 **[English Version]** | 🇫🇷 [Version Française](#-version-française)
 
-[![.NET](https://img.shields.io/badge/.NET-8.0-blue)](#) [![Language](https://img.shields.io/badge/Language-C%23-purple)](#) [![CodeRabbit](https://img.shields.io/badge/CodeRabbit-AI_Review-FF6B6B)](#)
+[![.NET](https://img.shields.io/badge/.NET-8.0-blue)](#) [![Language](https://img.shields.io/badge/Language-C%23-purple)](#) [![xUnit](https://img.shields.io/badge/Testing-xUnit-brightgreen)](#) [![CodeRabbit](https://img.shields.io/badge/CodeRabbit-AI_Review-FF6B6B)](#) 
 
 ## 1. Academic & Business Context
-
-This project is the core evaluation for the **Software Engineering** module. 
 
 Our development team acts as a newly integrated software unit for the publisher **ProSoft**. Reporting to the CIO, we are tasked with the end-to-end development of **EasySave**, a professional backup management software. 
 The software is integrated into the ProSoft Suite (Unit price: €200 excl. tax, with a 12% annual maintenance contract). The main business objective is to deliver a robust product while keeping future development and maintenance costs as low as possible.
@@ -16,7 +14,7 @@ The software is integrated into the ProSoft Suite (Unit price: €200 excl. tax,
 Developing EasySave is an exercise in **software architecture and lifecycle management**. 
 The project spans several weeks and requires the software to evolve drastically without breaking its core functionalities:
 
-* **Scalability & Evolvability:** The software begins as a basic Console Application but must seamlessly transition to a Graphical User Interface (GUI) using the **MVVM pattern**.
+* **Scalability & Evolvability:** The software begins as a basic Console Application but must seamlessly transition to a Graphical User Interface (GUI) using the **MVVM architecture**.
 * **Strict Code Quality:** International maintainability requires 100% English code, strict C# naming conventions, and absolute avoidance of code redundancy.
 * **Traceability:** Industrial-grade real-time logging systems must be implemented to track the exact state and performance of file transfers down to the millisecond.
 
@@ -47,11 +45,7 @@ To guarantee that the project can be inherited by other international ProSoft su
 * **Version Control:** GitHub (with branch protections and mandatory PR reviews).
 * **Code Formatting:** `.editorconfig` enforced via `dotnet format` to guarantee naming conventions.
 * **Unit Testing:** Automated `xUnit` test suites running on every commit.
-* **AI Code Review (CodeRabbit):** To enforce ProSoft's strict constraints, we integrated **CodeRabbit** into our GitHub repository. On every Pull Request, this AI-driven tool automatically scans the code to:
-  * Detect and block any French variables or comments (enforcing the English-only rule).
-  * Highlight code redundancy and suggest refactoring.
-  * Prevent hardcoded paths (e.g., `C:\temp\`).
-  * Generate automated, professional Release Notes based on the commits.
+* **AI Code Review :** **CodeRabbit** is integrated into our GitHub repository. On every Pull Request, this AI-driven tool is used exclusively to generate automated summaries and professional Release Notes based on the commits.
 
 ## 5. Getting Started
 ### Prerequisites
@@ -69,8 +63,6 @@ To guarantee that the project can be inherited by other international ProSoft su
 
 ## 1. Contexte Académique & Métier
 
-Ce projet constitue l'évaluation principale du module d'**Ingénierie Logicielle**.
-
 Notre équipe de développement agit en tant que nouvelle unité logicielle intégrée pour l'éditeur **ProSoft**. Sous la direction du DSI, nous sommes chargés du développement de A à Z d'**EasySave**, un logiciel de gestion de sauvegarde professionnel.
 Le logiciel est intégré à la suite ProSoft (Prix unitaire : 200 € HT, avec un contrat de maintenance annuel de 12%). L'objectif métier principal est de livrer un produit robuste tout en maintenant les coûts de développement et de maintenance futurs aussi bas que possible.
 
@@ -79,7 +71,7 @@ Le logiciel est intégré à la suite ProSoft (Prix unitaire : 200 € HT, avec 
 Le développement d'EasySave est un exercice d'**architecture logicielle et de gestion du cycle de vie**.
 Le projet s'étale sur plusieurs semaines et nécessite que le logiciel évolue considérablement sans casser ses fonctionnalités de base :
 
-* **Scalabilité & Évolutivité :** Le logiciel commence comme une application Console basique mais doit migrer de manière transparente vers une Interface Graphique (GUI) en utilisant le pattern **MVVM**.
+* **Scalabilité & Évolutivité :** Le logiciel commence comme une application Console basique mais doit migrer de manière transparente vers une Interface Graphique (GUI) en utilisant l'architecture **MVVM**.
 * **Qualité de Code Stricte :** La maintenabilité à l'international exige un code 100% en anglais, des conventions de nommage C# strictes et l'évitement absolu de toute redondance de code.
 * **Traçabilité :** Des systèmes de journalisation en temps réel de niveau industriel doivent être mis en place pour suivre l'état exact et les performances des transferts de fichiers à la milliseconde près.
 
@@ -110,11 +102,7 @@ Pour garantir que le projet puisse être repris par d'autres filiales internatio
 * **Contrôle de Version :** GitHub (avec protection des branches et revues de PR obligatoires).
 * **Formatage du Code :** `.editorconfig` appliqué via `dotnet format` pour garantir le respect des conventions de nommage.
 * **Tests Unitaires :** Suites de tests automatisées `xUnit` exécutées à chaque commit.
-* **Revue de Code par l'IA (CodeRabbit) :** Pour faire respecter les contraintes strictes de ProSoft, nous avons intégré **CodeRabbit** à notre dépôt GitHub. À chaque Pull Request, cet outil basé sur l'IA analyse automatiquement le code pour :
-  * Détecter et bloquer toute variable ou commentaire en français (pour faire respecter la règle du "tout-anglais").
-  * Mettre en évidence la redondance du code et suggérer des refactorisations.
-  * Empêcher les chemins codés en dur (ex. : `C:\temp\`).
-  * Générer des notes de version automatisées et professionnelles basées sur les commits.
+* **Revue de Code par l'IA :** **CodeRabbit** est intégré à notre dépôt GitHub. À chaque Pull Request, cet outil basé sur l'IA est utilisé exclusivement pour générer des résumés automatiques et des notes de version  basées sur les commits.
 
 ## 5. Pour Commencer
 ### Prérequis
