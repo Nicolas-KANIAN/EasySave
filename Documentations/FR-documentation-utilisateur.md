@@ -6,53 +6,63 @@ Vous trouverez dans ce manuel une présentation des principales fonctionnalités
 
 ## Démarrage rapide
 
-Pour lancer l'application, double-cliquez sur `EasySave.exe`.
+Pour lancer l'application, double-cliquez sur l'exécutable `EasySave.exe`. 
+Vous pouvez également lancer l'application en ligne de commande en y ajoutant directement les index des travaux à exécuter. Deux méthodes sont possibles :
+- **Une plage de travaux** : Utilisez un tiret (ex: `EasySave.exe 1-3` pour exécuter automatiquement les travaux 1, 2 et 3).
+- **Des travaux spécifiques** : Utilisez un point-virgule (ex: `EasySave.exe 1;3` pour exécuter automatiquement uniquement les travaux 1 et 3).
+
+## Choix de la langue
+
+À l'ouverture, choisissez la langue que vous souhaitez utiliser pour la navigation. Entrez le numéro correspondant (1 pour English, 2 pour Français), puis appuyez sur la touche **Entrée** pour valider.
+
+---
 
 ## Menu Principal
 
-À l'ouverture, chosissez la langue que vous souhaitez utiliser pour poursuivre la navigation dans l’application. Pour ce faire, entrez le numéro correspondant à la langue souhaitée, puis appuyez sur la touche **Entrée** pour valider.
-
-Vous accédez ensuite au menu principal, qui affiche toutes les options disponibles:
-
-- **1. Créer un travail de sauvegarde** 
-- **2. Afficher les travaux** 
-- **3. Lancer une sauvegarde** 
-- **4. Supprimer un travail** 
-- **5. Quitter** 
-
-Entrez le numéro de l'option souhaitez, puis appuyez sur la touche **Entrée** pour continuer.
+Une fois la langue sélectionnée, vous accédez au menu principal. Entrez le numéro de l'option souhaitée, puis appuyez sur la touche **Entrée** pour continuer.
 
 ### 1. Créer un travail de sauvegarde
 
-Permet de définir un nouveau travail de sauvegarde. Attention, celui-ci ne s'exécute pas automatiquement après sa création ! 
+Permet de définir un nouveau travail de sauvegarde. **Attention**, celui-ci ne s'exécute pas automatiquement après sa création, il est simplement sauvegardé dans votre liste ! 
 
 Vous devrez fournir :
-
-- **Nom du travail** : Un nom unique pour la sauvegarde.
-- **Répertoire Source (ex: C:\Dossier)** : Le chemin complet du dossier à sauvegarder.
+- **Nom du travail** : Un nom unique pour identifier la sauvegarde.
+- **Répertoire Source (ex: C:\Dossier)** : Le chemin complet du dossier que vous souhaitez sauvegarder.
 - **Répertoire Cible (ex: D:\Backup)** : Le chemin complet où les fichiers seront copiés.
 - **Type (0 = Complet, 1 = Différentiel)** :
-    - *0 = Complet* : Copie tous les fichiers à chaque fois.
-    - *1 = Différentiel* : Copie uniquement les fichiers modifiés depuis la dernière sauvegarde complète.
+    - *0 = Complet* : Copie l'intégralité des fichiers de la source vers la cible à chaque exécution.
+    - *1 = Différentiel* : Copie uniquement les fichiers nouveaux ou modifiés depuis la dernière sauvegarde.
 
-Un message confirmant la réussite de la création du travail s'affichera, puis le menu EsaySave réapparaîtra.
+Un message confirmant la réussite de la création s'affichera, puis le menu EasySave réapparaîtra.
 
-> **Note** : Vous pouvez créer jusqu'à 5 sauvegardes simultanément. Si cette limite est atteinte, vous devrez supprimer un travail existant avant d’en créer un nouveau.
+> **Note** : Vous pouvez créer jusqu'à 5 sauvegardes. Si cette limite est atteinte, vous devrez supprimer un travail existant avant d’en créer un nouveau.
 
 ### 2. Afficher les travaux
 
-Affiche une liste numérotée de tous les travaux de sauvegarde, dans l'ordre chronologique, avec leur nom, leur type, leur répertoire source et leur répertoire cible.
+Affiche la liste numérotée de tous vos travaux de sauvegarde enregistrés, dans l'ordre chronologique, avec leur nom, leur type, et leurs répertoires source/cible.
 
 ### 3. Lancer une sauvegarde
 
-Lance un ou plusieurs travaux de sauvegarde. L'ensemble des fichiers du dossier source sera copié vers le dossier cible selon le type de sauvegarde défini. Les logs d'activité seront mis à jour en temps réel.
+Lance l'exécution de vos travaux de sauvegarde. Tous les fichiers du dossier source seront copiés vers le dossier cible selon le type de sauvegarde défini.
 
-Vous pouvez saisir l’index du ou des travaux que vous souhaitez exécuter, ou simplement écrire **All** pour les lancer tous.
+Lorsqu'on vous le demande, vous avez plusieurs possibilités de saisie :
+- **Un seul travail** : Tapez simplement son numéro (ex: `2`).
+- **Plusieurs travaux précis** : Séparez les numéros par un point-virgule (ex: `1;3` lancera le travail 1 puis le 3).
+- **Une plage de travaux** : Utilisez un tiret (ex: `1-3` lancera les travaux 1, 2 et 3).
+- **Tous les travaux** : Tapez le mot `all` pour exécuter l'intégralité de votre liste de manière séquentielle.
 
 ### 4. Supprimer un travail
 
-Permet de retirer un travail de la liste. Sélectionnez simplement le travail à supprimer à l'aide de son index et confirmez votre choix. Vous pouvez aussi annuler en appuyant sur la touche **q**.
+Permet de retirer un travail de votre liste. Entrez simplement l'index (le numéro) du travail à supprimer. Si vous changez d'avis, vous pouvez annuler l'opération en appuyant sur la touche **q**.
 
 ### 5. Quitter
 
-Permet de quitter le logiciel de sauvegarde.
+Ferme proprement l'application EasySave.
+
+---
+
+## Fichiers de suivi (Logs)
+
+Pendant et après vos sauvegardes, EasySave génère automatiquement des rapports dans le dossier `EasyLogs` (situé au même endroit que votre application) :
+- **Suivi en direct (`state.json`)** : Ce fichier se met à jour en temps réel et vous permet de suivre la progression exacte du transfert en cours.
+- **Rapports journaliers (`DailyLog_date.json`)** : Conserve l'historique détaillé, le temps de transfert et la taille de chaque fichier copié au jour le jour.
