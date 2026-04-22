@@ -56,7 +56,7 @@ L'application est portable. Tous les fichiers de configuration et de logs sont s
 
 ## 4. Architecture et Conception Technique
 
-### Structuration des Dossiers (Architecture Console)
+### Structuration des Dossiers
 L'application est divisée en espaces de noms (namespaces) garantissant un couplage faible :
 
 * **`EasySave.Models`** : Structures de données (`BackupJob`, `BackupType`).
@@ -114,7 +114,7 @@ L'architecture de l'application a été pensée pour garantir un code robuste, t
 
 ---
 
-## 5. Intégrité et Tests (Assurance Qualité)
+## 5. Intégrité et Tests
 
 Nous avons accordé une grande importance à la qualité du code. La solution **`EasySaveTest`** (xUnit) couvre les aspects critiques du moteur v1.0 :
 

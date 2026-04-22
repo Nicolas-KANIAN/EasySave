@@ -56,7 +56,7 @@ The application is portable. All configuration and log files are stored in the f
 
 ## 4. Architecture and Technical Design
 
-### Folder Structure (Console Architecture)
+### Folder Structure
 The application is divided into namespaces ensuring loose coupling:
 
 * **`EasySave.Models`**: Data structures (`BackupJob`, `BackupType`).
@@ -110,7 +110,7 @@ The application's architecture was designed to guarantee robust, unit-testable c
 
 ---
 
-## 5. Integrity and Tests (Quality Assurance)
+## 5. Integrity and Tests
 
 We have placed great importance on code quality. The **`EasySaveTest`** (xUnit) solution covers the critical aspects of the v1.0 engine:
 
