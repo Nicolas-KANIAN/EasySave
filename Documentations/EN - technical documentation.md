@@ -23,8 +23,7 @@ This document contains the technical information required for the installation, 
 
 To best organize our project, we decided to follow a strict gitflow. We created a `develop` branch from `main`, and `features` branches for each project feature originating from the `develop` branch.
 
-<img width="700" alt="Gitflow Diagram" src="gitflow.webp" />
-<br><em>Image source: <a href="https://buddy.works/blog/5-types-of-git-workflows">Buddy Works</a></em>
+<img width="700" alt="Gitflow Diagram" src="./assets/gitflow.webp" />
 
 ---
 
@@ -74,19 +73,19 @@ To document the technical and functional design of the application, we modeled t
 
 **1. Use Case Diagram**
 Defines the possible interactions between the user and the system (Creation, Execution, Deletion of jobs).
-![Use Case Diagram](Project%20-%20EasySave/EasySave/Documentations/Use%20Case%20V.1.0.png)
+![Use Case Diagram](<./Use Case V.1.0.png>)
 
 **2. Activity Diagram**
 Details the logical execution flow of the engine when a backup is launched.
-![Activity Diagram](Project%20-%20EasySave/EasySave/Documentations/Activity%20Diagram%20V.1.0.png)
+![Activity Diagram](<./Activity Diagram V.1.0.png>)
 
 **3. Sequence Diagram**
 Illustrates the chronological calls between the different objects during the lifecycle of a backup.
-![Sequence Diagram](Project%20-%20EasySave/EasySave/Documentations/Sequence%20Diagram%20V.1.0.png)
+![Sequence Diagram](<./Sequence Diagram V.1.0.png>)
 
 **4. Class Diagram**
 Represents the detailed static architecture of the application and its Design Patterns.
-![Class Diagram](Project%20-%20EasySave/EasySave/Documentations/Class%20Diagram%20V.1.0.png)
+![Class Diagram](<./Class Diagram V.1.0.png>)
 
 
 ### Design Patterns Implementation

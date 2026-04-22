@@ -23,7 +23,7 @@ Ce document contient les informations techniques nécessaires pour l'installatio
 
 Afin d'organiser au mieux notre projet, nous avons décidé de suivre un gitflow précis. Nous avons créé une branche `develop` à partir de `main`, et des branches `features` pour chaque fonctionnalité du projet à partir de la branche `develop`.
 
-<img width="700" alt="Schéma du Gitflow" src="./Documentations/assets/gitflow.webp" />
+<img width="700" alt="Schéma du Gitflow" src="./assets/gitflow.webp" />
 
 ---
 
@@ -74,22 +74,22 @@ Afin de documenter la conception technique et fonctionnelle de l'application, no
 **1. Diagramme de Cas d'Utilisation (Use Case)**  
 Définit les interactions possibles entre l'utilisateur et le système (Création, Lancement, Suppression de travaux).
 
-![Diagramme de Cas d'Utilisation](./Documentations/assets/Usecase%20Diagram%20V.1.0.png)
+![Diagramme de Cas d'Utilisation](<./assets/Usecase Diagram V.1.0.png>)
 
 **2. Diagramme d'Activité**  
 Détaille le flux d'exécution logique du moteur lorsqu'une sauvegarde est lancée.
 
-![Diagramme d'Activité](./Documentations/assets/Activity%20Diagram%20V.1.0.png)
+![Diagramme d'Activité](<./assets/Activity Diagram V.1.0.png>)
 
 **3. Diagramme de Séquence**  
 Illustre les appels chronologiques entre les différents objets lors du cycle de vie d'une sauvegarde.
 
-![Diagramme de Séquence](./Documentations/assets/Sequence%20Diagram%20V.1.0.png)
+![Diagramme de Séquence](<./assets/Sequence Diagram V.1.0.png>)
 
 **4. Diagramme de Classes**  
 Représente l'architecture statique détaillée de l'application et de ses Design Patterns.
 
-![Diagramme de Classes](./Documentations/assets/Class%20Diagram%20V.1.0.png)
+![Diagramme de Classes](<./assets/Class Diagram V.1.0.png>)
 
 
 ### Implémentation des Design Patterns
