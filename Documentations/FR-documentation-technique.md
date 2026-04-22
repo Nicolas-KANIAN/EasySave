@@ -1,162 +1,128 @@
-# Documentation Support Technique
+# Documentation Support Technique - EasySave v1.0
 
-Ce document contient les informations techniques nécessaires pour l'installation et le dépannage de notre logiciel de sauvegarde EasySave.
-
----
-
-## Informations Générales
-
-- **Version** : 1.0
-
-**Outils et méthodes**
-
-- Visual Studio 2026
-- GitHub
-- Revue de code automatisée par IA avec CodeRabbit, intégrée à notre dépôt GitHub : à chaque Pull Request, elle vérifie le respect des standards (100 % anglais, absence de chemins codés en dur), détecte les redondances et propose des refactorisations - Source : https://docs.coderabbit.ai/reference/configuration
-
-**Langage, Framework et Outils utilisés**
-
-- Langage : C#
-- Framework : .NET 8.0
-- Système d'exploitation : Windows (compatible cross-platform)
-- Tests unitaires : xUnit - Source : https://xunit.net/?tabs=cs
-- Formatage du code : .editorconfig
+Ce document contient les informations techniques nécessaires pour l'installation, la compréhension de l'architecture et le dépannage de la version 1.0 (Console) de notre logiciel de sauvegarde EasySave.
 
 ---
 
-## Gitflow
+## 1. Informations Générales
 
-Afin d'organiser au mieux notre projet, nous avons décidé de suivre un gitflow précis. Nous avons créé une branche "develop" à partir de "main", et des branches "features" pour chaque fonctionnalité du projet à partir de la branche "develop".
-<img width="700" height="350" alt="image" src="gitflow.webp" />
+- **Version** : 1.0 (Livrable 1 - Application Console)
+- **Langage** : C#
+- **Framework** : .NET 8.0
+- **Système d'exploitation** : Windows (compatible cross-platform)
 
-Source de l'image : https://buddy.works/blog/5-types-of-git-workflows
+**Outils et Méthodes :**
+- **IDE & Versionning** : Visual Studio / GitHub
+- **Revue de code par IA** : **CodeRabbit** intégré au dépôt GitHub. À chaque Pull Request, l'IA vérifie le respect des standards (100 % anglais, absence de chemins codés en dur), détecte les redondances et propose des refactorisations. *(Source : [Configuration CodeRabbit](https://docs.coderabbit.ai/reference/configuration))*
+- **Tests unitaires** : **xUnit** *(Source : [Documentation xUnit](https://xunit.net/?tabs=cs))*
+- **Formatage du code** : `.editorconfig`
 
 ---
 
-## Structure des Fichiers et Emplacements
+## 2. Gitflow
+
+Afin d'organiser au mieux notre projet, nous avons décidé de suivre un gitflow précis. Nous avons créé une branche `develop` à partir de `main`, et des branches `features` pour chaque fonctionnalité du projet à partir de la branche `develop`.
+
+<img width="700" alt="Schéma du Gitflow" src="gitflow.webp" />
+<br><em>Source de l'image : <a href="https://buddy.works/blog/5-types-of-git-workflows">Buddy Works</a></em>
+
+---
+
+## 3. Structure des Fichiers et Configuration
 
 L'application est portable. Tous les fichiers de configuration et de logs sont stockés dans le dossier où est présent l'exécutable `EasySave.exe`.
 
-### 1. Configuration Générale
-
-Les paramètres de l'application sont stockés au format JSON.
-
+### Configuration Générale (`config.json`)
 - **Emplacement** : `<Dossier_Application>/EasyLogs/config.json`
-- **Paramètres** :
-    - `LogFormat` : Format des logs (`Json` ou `Xml`)
-    - `Language` : Langue de l'interface (`en` ou `fr`)
-    - `IsEncryptionEnabled` : Activation du chiffrement CryptoSoft
-    - `CryptExtensions` : Liste des extensions à chiffrer
-    - `IsBusinessSoftwareCheckEnabled` : Activation de la détection de logiciel métier
-    - `BusinessSoftwareNames` : Liste des noms de processus métier à surveiller
-    - `IsPriorityEnabled` : Activation de la gestion des fichiers prioritaires
-    - `PriorityFiles` : Liste des extensions prioritaires
-    - `LargeFileThresholdKB` : Seuil (en Ko) pour la détection des gros fichiers
-    - `UseLocalLog` : Booléen pour activer les logs locaux
-    - `RemoteLogAddress` : Adresse IP du serveur de logs (EasyLogServer)
-    - `RemoteLogPort` : Port TCP du serveur de logs (6767 par défaut)
+- **Paramètres globaux** :
+  - `LogFormat` : Format d'écriture des fichiers de logs (`Json` ou `Xml`).
+  - `Language` : Langue de l'interface console (`en` ou `fr`).
 
-### 2. Configuration des Travaux
+### Configuration des Travaux (`jobs.json`)
+- **Emplacement** : `<Dossier_Application>/EasyLogs/jobs.json`
+- **Format** : Tableau JSON d'objets `BackupJob` (Name, Source, Target, Type).
+- **Règle Métier** : Limité techniquement à 5 travaux maximum. Si ce fichier est supprimé, la liste sera vide au prochain lancement.
 
-Les travaux de sauvegarde sont stockés au format JSON.
+### Journaux d'Activité (`DailyLog_{date}`)
+- **Emplacement** : `<Dossier_Application>/EasyLogs/DailyLog_{dd_MM_yyyy}.json` (ou `.xml`)
+- **Format** : Un fichier par jour généré par la DLL `EasyLog`.
+- **Contenu** : Détail de chaque transfert (`Timestamp`, `Name`, `Source`, `Target`, `FileSize`, `TransferTimeMs`).
 
-- **Emplacement** : `<Dossier_Application>/EasyLogs/UserBackups.json`
-- **Format** : Tableau JSON d'objets `BackupSaveDto` (Name, Source, Target, Type).
-- **Note** : Si ce fichier est supprimé, la liste des travaux sauvegardés sera vide au prochain lancement.
-
-### 3. Journaux d'Activité (Logs)
-
-Chaque transfert de fichier génère une entrée de journal.
-
-- **Emplacement** : `<Dossier_Application>/EasyLogs/DailyLog_{dd_MM_yyyy}.json` ou `.xml`
-- **Format** : Un fichier par jour (JSON ou XML selon la configuration). Contient les détails :
-    - `Timestamp`, `Name`, `Source`, `Target`, `FileSize`, `TransferTimeMs`, `CryptingTimeMs`
-- **Rotation** : Les fichiers logs sont créés quotidiennement et actualisés en temps réel.
-
-### 4. Fichier d'État (LiveLog)
-
-L'état en temps réel des sauvegardes est écrit dans un fichier d'état.
-
-- **Emplacement** : `<Dossier_Application>/EasyLogs/LiveLog.json` ou `.xml`
-- **Contenu** : `Name`, `Source`, `Target`, `SizeFilesToTransfer`, `SizeFilesRemaining`, `NbFilesToTransfer`,
-  `NbFilesRemaining`, `Progression`, `State` (Active/Inactive), `Timestamp`
-- **Comportement** : Réécrit à chaque transfert de fichier et en fin de sauvegarde.
+### Fichier d'État temps réel (`state.json`)
+- **Emplacement** : `<Dossier_Application>/EasyLogs/state.json` (ou `.xml`)
+- **Contenu** : État d'avancement du travail en cours (`Progression`, `TotalFilesToCopy`, `NbFilesLeftToDo`, `RemainingFilesSize`, `State`).
+- **Comportement** : Réécrit dynamiquement à chaque transfert de fichier.
 
 ---
 
-## Architecture et Conception Technique
+## 4. Architecture et Conception Technique
 
-### Structuration des Dossiers
+### Structuration des Dossiers (Architecture Console)
+L'application est divisée en espaces de noms (namespaces) garantissant un couplage faible :
 
-L'application est divisée en plusieurs couches distinctes :
+* **`EasySave.Models`** : Structures de données (`BackupJob`, `BackupType`).
+* **`EasySave.Services`** : Logique métier et orchestration (`JobManager`, `BackupEngine`).
+* **`EasySave.Patterns.Strategy`** : Algorithmes de sauvegarde (`FullBackupStrategy`, `DifferentialBackupStrategy`).
+* **`EasySave.Patterns.Factory`** : Usines de création logicielle (`BackupFactory`).
+* **`EasySave.Patterns.Bridge`** : Abstraction du système de fichiers OS (`IFileSystem`, `LocalFileSystem`).
+* **`EasySave.Patterns.Observer`** : Écoute du suivi temps réel (`IBackupObserver`, `StateLoggerObserver`).
+* **`EasyLog` (DLL)** : Bibliothèque externe de journalisation (Gère les fichiers de logs journaliers et l'état en direct).
 
-- **EasySave** (Application principale) :
-    - `Backup/` : Stratégies de sauvegarde (`BackupBase`, `CompleteBackup`, `DifferentialBackup`).
-    - `Services/` : Logique métier (`BackupManager`, `BackupExecutor`, `ConfigurationManager`, `ProcessChecker`,
-      `CommandInterpreter`).
-    - `UI/` : Interfaces utilisateur. 
-        - `UIConsole.cs` : Interface console.
-        - `UIGraphic.cs` : Interface graphique.
-        - `Graphical/` : Vues et ViewModels Avalonia (MVVM).
-    - `Models/` : Structures de données (`UserEntry`, `SourceFile`).
-    - `Interfaces/` : Abstractions (`IBackup`, `IBackupManager`, `IObserver`).
-    - `Resources/` : Fichiers de traduction (.resx) pour l'internationalisation FR/EN.
+### Modélisation UML
 
-- **EasyLog.dll** (Bibliothèque de logs) :
-    - `DailyLog` : Gestion des journaux quotidiens (JSON/XML).
-    - `LiveLog` : Gestion du fichier d'état temps réel (JSON/XML).
+Afin de documenter la conception technique et fonctionnelle de l'application, nous avons modélisé le système à travers les quatre vues fondamentales UML :
 
-### Design Patterns et Principes SOLID
+**1. Diagramme de Cas d'Utilisation (Use Case)**
+Définit les interactions possibles entre l'utilisateur et le système (Création, Lancement, Suppression de travaux).
+![Diagramme de Cas d'Utilisation](Project%20-%20EasySave/EasySave/Documentations/Use%20Case%20V.1.0.png)
 
-- **Strategy Pattern** : Fichiers : IBackupStrategy.cs, FullBackupStrategy.cs, DifferentialBackupStrategy.cs
-    - *Le problème* : Comment calculer la liste des fichiers à copier sans polluer le moteur de sauvegarde avec des algorithmes mathématiques complexes ?
-    - *La solution* : On encapsule chaque algorithme dans sa propre classe. Le moteur appelle la méthode GetFilesToCopy() via l'interface IBackupStrategy. Le moteur se fiche de savoir comment la liste est calculée ; il sait juste qu'il va recevoir une liste de fichiers à copier. Si demain on veut ajouter une nouvelle sauvegarde, il suffit de créer une nouvelle classe sans toucher au reste du code.
+**2. Diagramme d'Activité**
+Détaille le flux d'exécution logique du moteur lorsqu'une sauvegarde est lancée.
+![Diagramme d'Activité](Project%20-%20EasySave/EasySave/Documentations/Activity%20Diagram%20V.1.0.png)
 
-- **Observer Pattern** : Fichiers : IBackupObserver.cs, StateLoggerObserver.cs, BackupEngine.cs
-    - *Le problème* : Le moteur de sauvegarde (BackupEngine) copie des fichiers. Le fichier d'état (state.json) doit être mis à jour en temps réel (pour afficher une barre de progression). Mais le moteur ne doit pas être dépendant du système de log, sinon on casse le principe de responsabilité unique.
-    - *La solution* : Le moteur agit comme une station radio : il "diffuse" son état d'avancement (NotifyObservers). Les classes qui sont intéressées s'y "abonnent". Ici, le StateLoggerObserver écoute le moteur et écrit dans le JSON à chaque notification. Le moteur fait son travail sans même savoir qui l'écoute !
+**3. Diagramme de Séquence**
+Illustre les appels chronologiques entre les différents objets lors du cycle de vie d'une sauvegarde.
+![Diagramme de Séquence](Project%20-%20EasySave/EasySave/Documentations/Sequence%20Diagram%20V.1.0.png)
 
-- **Singleton Pattern** : Fichiers : Logger.cs
-    - *Le problème* : L'écriture dans un fichier JSON (logs.json ou state.json) est une opération critique. Si deux travaux de sauvegarde tentaient d'écrire en même temps dans le même fichier, l'application crasherait à cause d'un conflit d'accès (File Lock).
-    - *La solution* : Le Singleton garantit qu'il n'existe qu'une seule et unique instance de la classe Logger dans toute l'application. Grâce au mécanisme de verrouillage (lock (_lock)), il force tous les travaux à faire la queue pour écrire leurs informations un par un, garantissant la stabilité du programme.
+**4. Diagramme de Classes**
+Représente l'architecture statique détaillée de l'application et de ses Design Patterns.
+![Diagramme de Classes](Project%20-%20EasySave/EasySave/Documentations/Class%20Diagram%20V.1.0.png)
 
-- **Factory Pattern** : Fichiers : BackupFactory.cs
-    - *Le problème* : L'application propose plusieurs types de sauvegardes (Complète, Différentielle). Si le moteur de sauvegarde (BackupEngine) devait instancier lui-même ces algorithmes avec des if ou des switch, il deviendrait complexe et devrait être modifié à chaque ajout d'un nouveau type de sauvegarde.
-    - *La solution* : On délègue la création de l'objet à une "Usine". Le moteur dit simplement à la Factory : "J'ai besoin d'une sauvegarde de type X", et la Factory lui retourne le bon outil prêt à l'emploi.
+*(Note : Assurez-vous que les noms de fichiers ci-dessus correspondent exactement à vos fichiers PNG dans le dossier).*
 
-- **Bridge Pattern** : Fichiers : IFileSystem.cs, LocalFileSystem.cs
-    - *Le problème* : Si l'application utilise directement System.IO (les commandes Windows) partout, il est impossible de faire des tests unitaires sans créer de vrais fichiers sur le disque dur de l'ordinateur, ce qui est lent et dangereux.
-    - *La solution* : On crée une interface (un pont) entre notre application et le système d'exploitation. En production, on utilise LocalFileSystem qui parle à Windows. En phase de test, on pourra injecter un "Faux" système de fichiers (Mock) qui fera croire à l'application qu'elle copie des fichiers, le tout en mémoire vive de manière instantanée.
+### Implémentation des Design Patterns
 
-- **Principes SOLID** : 
-    - *S - Principe de Responsabilité Unique* : Une classe ne doit avoir qu'une seule et unique raison de changer (elle ne doit faire qu'une seule chose). Dans notre code, chaque fichier a donc un rôle strict et délimité (JobManager = liste des travaux et de sa sauvegarde en JSON mais ne copie pas de fichiers, BackupEngine = orchestre la copie mais ne sait pas comment sauvegarder un JSON, Logger = écrit que des logs).
-    - *O - Principe Ouvert/Fermé* : Une classe doit être ouverte à l'extension, mais fermée à la modification. C'est ici que le Pattern Strategy agit. Si on nous demande d'ajouter un nouveau type de sauvegarde, nous n'aurons pas besoin de modifier la classe BackupEngine (fermée à la modification) mais nous allons simplement créer une nouvelle classe NewTypeBackupStrategy qui implémente IBackupStrategy (le code est ouvert à l'extension).
-    - *L - Principe de Substitution de Liskov* : On doit pouvoir remplacer une classe parente (ou une interface) par n'importe laquelle de ses classes enfants sans que l'application ne plante ou n'ait un comportement anormal. Dans notre projet, le BackupEngine s'attend à recevoir une IBackupStrategy. Que la BackupFactory lui donne une FullBackupStrategy ou une DifferentialBackupStrategy, le moteur l'utilise exactement de la même manière en appelant GetFilesToCopy(). Le moteur ne fait aucune différence entre les deux, et le programme fonctionne parfaitement dans les deux cas. 
-    - *I - Principe de Ségrégation des Interfaces* : Il vaut mieux avoir plusieurs petites interfaces très spécifiques plutôt qu'une seule énorme interface "fourre-tout". Un client ne doit pas être forcé d'implémenter des méthodes dont il ne se sert pas. Dans notre cas, nos interfaces sont toutes petites et ultra-ciblées (IBackupObserver ne contient que la méthode Update(), IBackupStrategy ne contient que GetFilesToCopy()).
-    - *D - Principe d'Inversion des Dépendances* : Les modules de haut niveau (le moteur de l'application) ne doivent pas dépendre des modules de bas niveau (l'accès au disque dur ou à Windows). Les deux doivent dépendre d'abstractions (des interfaces). Dans notre code, c'est exactement le rôle du Pattern Bridge. BackupEngine (haut niveau) ne dépend plus directement de System.IO.File (bas niveau). Au lieu de ça, BackupEngine dépend de l'interface IFileSystem (l'abstraction).
+| Pattern | Problème technique résolu | Solution apportée dans l'architecture |
+| :--- | :--- | :--- |
+| **Strategy** | Éviter de polluer le moteur de sauvegarde avec des algorithmes mathématiques complexes. | Encapsulation de chaque algorithme (`Full`, `Differential`) dans sa propre classe via l'interface `IBackupStrategy`. |
+| **Observer** | Mettre à jour `state.json` en temps réel sans rendre le moteur dépendant du système de logs. | Le moteur "diffuse" son état (`NotifyObservers`). `StateLoggerObserver` écoute et écrit sans impacter le moteur. |
+| **Singleton** | Éviter les crashs d'accès concurrents (File Lock) lors de l'écriture des fichiers de logs. | La classe `Logger` garantit une instance unique sécurisée par un mécanisme de verrouillage (`lock`). |
+| **Factory** | Simplifier l'instanciation des stratégies sans multiplier les `if/switch` dans le moteur. | `BackupFactory` génère et retourne dynamiquement le bon algorithme en fonction du type demandé par l'utilisateur. |
+| **Bridge** | Permettre les tests unitaires sans créer de vrais fichiers physiques sur le disque dur. | Création d'une interface `IFileSystem` agissant comme un pont, permettant d'injecter des "Mocks" en phase de test. |
 
-L'architecture de l'application EasySave a été pensée autour des principes SOLID. L'utilisation conjuguée des interfaces (IFileSystem, IBackupStrategy) et des Design Patterns (Strategy, Bridge, Observer...) garantit un couplage faible entre nos composants. Ainsi, notre code est robuste, facilement testable unitairement, et prêt à évoluer vers les versions futures (ajout de nouveaux algorithmes ou d'une interface graphique) sans nécessiter de réécriture du moteur central.
+### Respect des Principes SOLID
+
+L'architecture de l'application a été pensée pour garantir un code robuste, testable unitairement et prêt à évoluer vers des interfaces graphiques (pour le Livrable 2) sans réécriture du moteur central :
+
+- **S - Responsabilité Unique** : Chaque fichier a un rôle strict. `JobManager` gère la liste, `BackupEngine` orchestre la copie, `Logger` gère les écritures.
+- **O - Ouvert/Fermé** : Si nous devons ajouter une nouvelle sauvegarde (ex: Incrémentale), nous n'avons pas à modifier `BackupEngine`, mais simplement à créer une nouvelle classe implémentant `IBackupStrategy`.
+- **L - Substitution de Liskov** : Le `BackupEngine` s'attend à recevoir une `IBackupStrategy`. Qu'il s'agisse d'une `FullBackupStrategy` ou d'une `DifferentialBackupStrategy`, le moteur l'utilise exactement de la même manière sans anomalie.
+- **I - Ségrégation des Interfaces** : Nos interfaces sont petites et ciblées. `IBackupObserver` ne contient que la méthode `Update()`, `IBackupStrategy` ne contient que `GetFilesToCopy()`.
+- **D - Inversion des Dépendances** : `BackupEngine` (haut niveau) ne dépend plus directement de `System.IO.File` (bas niveau), mais de l'abstraction `IFileSystem`.
 
 ---
 
-## Intégrité et Tests
+## 5. Intégrité et Tests (Assurance Qualité)
 
-Nous avons accordé une grande importance à la qualité du code comme le montre la solution **`EasySaveTest`** qui couvre :
+Nous avons accordé une grande importance à la qualité du code. La solution **`EasySaveTest`** (xUnit) couvre les aspects critiques du moteur v1.0 :
 
-- **Tests Unitaires** :
-    - *BackupJobTests* : 
-        - Teste que l'instanciation d'un travail de sauvegarde affecte correctement le nom, les répertoires source et cible, ainsi que le type de sauvegarde en mémoire.
-    - *BackupFactoryTests* : 
-        - Teste que la fabrique logicielle retourne bien l'objet correspondant à l'algorithme de sauvegarde complète lorsqu'on lui passe le paramètre associé.
-        - Teste que la fabrique logicielle retourne bien l'objet correspondant à l'algorithme de sauvegarde différentielle lorsqu'on lui passe le paramètre associé.
-    - *LoggerTests* :
-        - Teste que la classe de journalisation retourne strictement la même instance mémoire à chaque appel pour éviter tout conflit d'écriture dans le fichier de logs.
-    - *JobManagerTests* : 
-        - Teste que le gestionnaire ajoute correctement un nouveau travail à sa liste interne lorsque la capacité maximale n'est pas encore atteinte.
-        - Teste qu'un travail de sauvegarde existant est bien retiré de la liste du gestionnaire lorsqu'une demande de suppression avec un index valide est effectuée.
-        - Teste que la création de six travaux consécutifs pour prouver que le système bloque techniquement l'ajout au-delà de la limite stricte de cinq travaux imposée par le cahier des charges.
-        - Teste que l'application ignore la requête et maintient sa stabilité sans planter si une tentative de suppression est effectuée avec un index hors limites.
-    - *BackupEngineTests* : 
-        - Teste que le moteur de sauvegarde s'arrête proprement et de manière sécurisée, sans provoquer d'erreur fatale, si le répertoire source fourni est physiquement introuvable.
+- **Tests des Modèles (`BackupJobTests`)** : Vérifie que l'instanciation d'un travail affecte correctement le nom, les répertoires et le type en mémoire.
+- **Tests de l'Architecture (`BackupFactoryTests`)** : S'assure que la fabrique logicielle retourne le bon objet métier (`Full` ou `Differential`) selon le paramètre fourni.
+- **Tests de Concurrence (`LoggerTests`)** : Prouve que le pattern Singleton retourne strictement la même instance mémoire à chaque appel pour éviter tout conflit d'écriture.
+- **Tests des Règles Métiers (`JobManagerTests`)** :
+  - Validation de l'ajout/suppression de travaux via index.
+  - Création de six travaux consécutifs pour prouver le blocage technique au-delà de la **limite stricte de cinq travaux**.
+  - Maintien de la stabilité (anti-crash) lors d'une tentative de suppression avec un index hors limites.
+- **Tests de Résilience (`BackupEngineTests`)** : Vérifie que le moteur s'arrête proprement et de manière sécurisée (sans erreur fatale) si le répertoire source fourni est physiquement introuvable.
 
-L'objectif est de repérer rapidement les bugs, de prévenir les régressions quand on modifie le code, et de simplifier la maintenance du projet.
+L'objectif de cette couverture est de valider les fondations techniques (v1.0) avant d'aborder la migration vers une interface graphique.
