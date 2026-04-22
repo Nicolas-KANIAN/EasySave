@@ -6,7 +6,7 @@ In this manual, you will find an overview of the application’s main features a
 
 ## Quick Start
 
-To launch the application, double-click `EasySave.slnx`.
+To launch the application, double-click `EasySave.exe`.
 
 ## Main Menu
 

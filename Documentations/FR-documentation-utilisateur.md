@@ -6,7 +6,7 @@ Vous trouverez dans ce manuel une présentation des principales fonctionnalités
 
 ## Démarrage rapide
 
-Pour lancer l'application, double-cliquez sur `EasySave.slnx`.
+Pour lancer l'application, double-cliquez sur `EasySave.exe`.
 
 ## Menu Principal
 
