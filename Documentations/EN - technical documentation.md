@@ -88,7 +88,6 @@ Illustrates the chronological calls between the different objects during the lif
 Represents the detailed static architecture of the application and its Design Patterns.
 ![Class Diagram](Project%20-%20EasySave/EasySave/Documentations/Class%20Diagram%20V.1.0.png)
 
-*(Note: Make sure the file names above match your PNG files in the folder exactly).*
 
 ### Design Patterns Implementation
 

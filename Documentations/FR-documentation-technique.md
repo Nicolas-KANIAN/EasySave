@@ -23,8 +23,7 @@ Ce document contient les informations techniques nécessaires pour l'installatio
 
 Afin d'organiser au mieux notre projet, nous avons décidé de suivre un gitflow précis. Nous avons créé une branche `develop` à partir de `main`, et des branches `features` pour chaque fonctionnalité du projet à partir de la branche `develop`.
 
-<img width="700" alt="Schéma du Gitflow" src="gitflow.webp" />
-<br><em>Source de l'image : <a href="https://buddy.works/blog/5-types-of-git-workflows">Buddy Works</a></em>
+<img width="700" alt="Schéma du Gitflow" src="/assets/gitflow.webp" />
 
 ---
 
@@ -72,23 +71,26 @@ L'application est divisée en espaces de noms (namespaces) garantissant un coupl
 
 Afin de documenter la conception technique et fonctionnelle de l'application, nous avons modélisé le système à travers les quatre vues fondamentales UML :
 
-**1. Diagramme de Cas d'Utilisation (Use Case)**
+**1. Diagramme de Cas d'Utilisation (Use Case)**  
 Définit les interactions possibles entre l'utilisateur et le système (Création, Lancement, Suppression de travaux).
-![Diagramme de Cas d'Utilisation](Project%20-%20EasySave/EasySave/Documentations/Use%20Case%20V.1.0.png)
 
-**2. Diagramme d'Activité**
+![Diagramme de Cas d'Utilisation](./Usecase%20Diagram%20V.1.0.png)
+
+**2. Diagramme d'Activité**  
 Détaille le flux d'exécution logique du moteur lorsqu'une sauvegarde est lancée.
-![Diagramme d'Activité](Project%20-%20EasySave/EasySave/Documentations/Activity%20Diagram%20V.1.0.png)
 
-**3. Diagramme de Séquence**
+![Diagramme d'Activité](./Activity%20Diagram%20V.1.0.png)
+
+**3. Diagramme de Séquence**  
 Illustre les appels chronologiques entre les différents objets lors du cycle de vie d'une sauvegarde.
-![Diagramme de Séquence](Project%20-%20EasySave/EasySave/Documentations/Sequence%20Diagram%20V.1.0.png)
 
-**4. Diagramme de Classes**
+![Diagramme de Séquence](./Sequence%20Diagram%20V.1.0.png)
+
+**4. Diagramme de Classes**  
 Représente l'architecture statique détaillée de l'application et de ses Design Patterns.
-![Diagramme de Classes](Project%20-%20EasySave/EasySave/Documentations/Class%20Diagram%20V.1.0.png)
 
-*(Note : Assurez-vous que les noms de fichiers ci-dessus correspondent exactement à vos fichiers PNG dans le dossier).*
+![Diagramme de Classes](./Class%20Diagram%20V.1.0.png)
+
 
 ### Implémentation des Design Patterns
 
