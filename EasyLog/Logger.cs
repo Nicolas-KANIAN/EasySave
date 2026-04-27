@@ -77,7 +77,7 @@ namespace EasyLog
                 {
                     XmlSerializer serializer = new XmlSerializer(typeof(List<LogEntry>));
 
-                    if (File.Exists(filePath))
+                    if (File.Exists(filePath) && new FileInfo(filePath).Length > 0)
                     {
                         using (StreamReader reader = new StreamReader(filePath))
                         {
@@ -85,15 +85,16 @@ namespace EasyLog
                             {
                                 logs = (List<LogEntry>?)serializer.Deserialize(reader) ?? new List<LogEntry>();
                             }
-                            catch
+                            catch (InvalidOperationException)
                             {
-                                // Handles corrupted or empty XML files gracefully
+                                logs = new List<LogEntry>();
                             }
                         }
                     }
 
                     logs.Add(entry);
-                    using (StreamWriter writer = new StreamWriter(filePath))
+                    var xmlSettings = new System.Xml.XmlWriterSettings { Indent = true };
+                    using (var writer = System.Xml.XmlWriter.Create(filePath, xmlSettings))
                     {
                         serializer.Serialize(writer, logs);
                     }
