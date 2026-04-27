@@ -1,6 +1,6 @@
-# Technical Support Documentation - EasySave v1.0
+# Technical Support Documentation - EasySave v1.1
 
-This document contains the technical information required for the installation, understanding of the architecture, and troubleshooting of version 1.0 (Console) of our EasySave backup software.
+This document contains the technical information required for the installation, understanding of the architecture, and troubleshooting of version 1.1 (Console) of our EasySave backup software.
 
 ---
 
