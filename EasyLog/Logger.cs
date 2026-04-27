@@ -65,7 +65,14 @@ namespace EasyLog
                         string json = File.ReadAllText(filePath);
                         if (!string.IsNullOrWhiteSpace(json))
                         {
-                            logs = JsonSerializer.Deserialize<List<LogEntry>>(json) ?? new List<LogEntry>();
+                            try
+                            {
+                                logs = JsonSerializer.Deserialize<List<LogEntry>>(json) ?? new List<LogEntry>();
+                            }
+                            catch (JsonException)
+                            {
+                                logs = new List<LogEntry>();
+                            }
                         }
                     }
 

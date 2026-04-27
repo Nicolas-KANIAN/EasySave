@@ -11,7 +11,7 @@ namespace EasySave.Services
     public class ConfigManager
     {
         private readonly string _configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
-        public AppConfig Config { get; private set; }
+        public AppConfig Config { get; private set; } = new AppConfig();
 
         public ConfigManager()
         {
