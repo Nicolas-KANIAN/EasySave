@@ -1,5 +1,6 @@
 ﻿using EasyLog;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace EasySave.Services
 {
@@ -13,6 +14,12 @@ namespace EasySave.Services
         private readonly string _configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
         public AppConfig Config { get; private set; } = new AppConfig();
 
+        private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
+
         public ConfigManager()
         {
             LoadConfig();
@@ -20,30 +27,35 @@ namespace EasySave.Services
 
         public void LoadConfig()
         {
-            try
+            if (!File.Exists(_configPath))
             {
-                if (File.Exists(_configPath))
-                {
-                    string json = File.ReadAllText(_configPath);
-                    Config = JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
-                    return;
-                }
-            }
-            catch (Exception ex) when (ex is JsonException || ex is IOException || ex is UnauthorizedAccessException)
-            {
-                Console.WriteLine($"[WARNING] Invalid or unreadable configuration ({ex.Message}). Using default values.");
+                Config = new AppConfig();
+                SaveConfig();
+                return;
             }
 
-            Config = new AppConfig();
-            SaveConfig();
+            try
+            {
+                string json = File.ReadAllText(_configPath);
+                Config = JsonSerializer.Deserialize<AppConfig>(json, _jsonOptions) ?? new AppConfig();
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"[WARNING] Invalid JSON configuration ({ex.Message}). Using default values.");
+                Config = new AppConfig();
+                SaveConfig();
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                Console.WriteLine($"[ERROR] Failed to read configuration ({ex.Message}). Using current memory configuration.");
+            }
         }
 
         public void SaveConfig()
         {
             try
             {
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                File.WriteAllText(_configPath, JsonSerializer.Serialize(Config, options));
+                File.WriteAllText(_configPath, JsonSerializer.Serialize(Config, _jsonOptions));
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
             {

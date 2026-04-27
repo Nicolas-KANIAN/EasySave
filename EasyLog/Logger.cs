@@ -17,8 +17,41 @@ namespace EasyLog
         private static Logger? _instance;
         private static readonly object _lock = new object();
 
+        private LogFormat _format = LogFormat.Json;
+
         // Determines the format used for writing log files.
-        public LogFormat Format { get; set; } = LogFormat.Json;
+        public LogFormat Format
+        {
+            get => _format;
+            set
+            {
+                lock (_lock)
+                {
+                    if (_format == value) return;
+                    _format = value;
+
+                    // Deletes the state file of the old format to prevent stale data.
+                    string staleExt = value == LogFormat.Json ? ".xml" : ".json";
+                    string stalePath = Path.Combine(_logDirectory, $"state{staleExt}");
+
+                    if (File.Exists(stalePath))
+                    {
+                        try
+                        {
+                            File.Delete(stalePath);
+                        }
+                        catch (IOException ex)
+                        {
+                            Console.Error.WriteLine($"[WARNING] Cannot delete stale state file (File is locked): {ex.Message}");
+                        }
+                        catch (UnauthorizedAccessException ex)
+                        {
+                            Console.Error.WriteLine($"[WARNING] Cannot delete stale state file (Access denied): {ex.Message}");
+                        }
+                    }
+                }
+            }
+        }
 
         // Centralizes the management of log writing and real-time tracking.
         // Automatically creates the log directory.
