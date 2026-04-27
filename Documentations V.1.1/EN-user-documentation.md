@@ -57,7 +57,7 @@ Allows you to remove a job from your list. Simply enter the index (number) of th
 
 ### 5. Settings (Log Format)
 
-Allows you to change the log file format. Simply enter the number corresponding to the format you want (1 for JSON or 2 for XML).If it has already been entered, the current log format will be displayed. If you change your mind, you can cancel this operation by pressing the **q** key.
+Allows you to change the log file format. Simply enter the number corresponding to the format you want (1 for JSON or 2 for XML). If it has already been entered, the current log format will be displayed. If you change your mind, you can cancel this operation by pressing the **q** key.
 
 ### 6. Exit
 
