@@ -1,6 +1,6 @@
-﻿using EasySave.Models;
+﻿using EasyLog;
+using EasySave.Models;
 using EasySave.Services;
-using EasyLog;
 
 namespace EasySave
 {
