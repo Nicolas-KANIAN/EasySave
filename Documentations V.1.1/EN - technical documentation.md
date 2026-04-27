@@ -78,15 +78,15 @@ Defines the possible interactions between the user and the system (Creation, Exe
 
 **2. Activity Diagram**
 Details the logical execution flow of the engine when a backup is launched.
-![Activity Diagram](<./Activity Diagram V.1.0.png>)
+![Activity Diagram](<./assets/Activity Diagram V.1.1.png>)
 
 **3. Sequence Diagram**
 Illustrates the chronological calls between the different objects during the lifecycle of a backup.
-![Sequence Diagram](<./Sequence Diagram V.1.0.png>)
+![Sequence Diagram](<./assets/Sequence Diagram V.1.1.png>)
 
 **4. Class Diagram**
 Represents the detailed static architecture of the application and its Design Patterns.
-![Class Diagram](<./Class Diagram V.1.0.png>)
+![Class Diagram](<./assets/Class Diagram V.1.1.png>)
 
 
 ### Implementation of Design Patterns
