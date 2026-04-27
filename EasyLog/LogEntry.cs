@@ -1,4 +1,4 @@
-﻿// Represents a JSON-serializable log entry containing backup details (timestamp, name, source, target, size, and duration).
+﻿// Represents a log entry containing backup details (timestamp, name, source, target, size, and duration).
 namespace EasyLog
 {
     public class LogEntry
