@@ -1,4 +1,5 @@
-﻿using EasySave.Models;
+﻿using EasyLog;
+using EasySave.Models;
 using EasySave.Services;
 
 namespace EasySave
@@ -10,6 +11,9 @@ namespace EasySave
         // Application startup: initializes services and handles the execution flow.
         static void Main(string[] args)
         {
+            ConfigManager configManager = new ConfigManager();
+            Logger.Instance.Format = configManager.Config.LogFormat;
+
             JobManager jobManager = new JobManager();
             BackupEngine engine = new BackupEngine();
 
@@ -37,7 +41,8 @@ namespace EasySave
                 Console.WriteLine(isFrench ? "2. Afficher les travaux" : "2. List backup jobs");
                 Console.WriteLine(isFrench ? "3. Lancer une sauvegarde" : "3. Run a backup job");
                 Console.WriteLine(isFrench ? "4. Supprimer un travail" : "4. Delete a backup job");
-                Console.WriteLine(isFrench ? "5. Quitter" : "5. Exit");
+                Console.WriteLine(isFrench ? "5. Paramètres (Format des logs)" : "5. Settings (Log Format)");
+                Console.WriteLine(isFrench ? "6. Quitter" : "6. Exit");
                 Console.Write("> ");
 
                 string choice = Console.ReadLine();
@@ -79,14 +84,31 @@ namespace EasySave
                         {
                             var j = jobManager.Jobs[i];
                             Console.WriteLine($"[{i + 1}] Nom : {j.Name} | Type : {j.Type}");
-                            Console.WriteLine($"    Source : {j.SourceDirectory}");
-                            Console.WriteLine($"    Cible  : {j.TargetDirectory}");
+                            Console.WriteLine($"    Source : {j.SourceDirectory}");
+                            Console.WriteLine($"    Cible  : {j.TargetDirectory}");
                             Console.WriteLine(new string('-', 50));
                         }
                         Console.WriteLine();
                         break;
 
                     case "3":
+                        if (jobManager.Jobs.Count == 0)
+                        {
+                            Console.WriteLine(isFrench ? "[INFO] Aucun travail de sauvegarde existant." : "[INFO] No existing backup jobs.");
+                            break;
+                        }
+
+                        Console.WriteLine(isFrench ? "\n=== Travaux existants ===" : "\n=== Existing Jobs ===");
+                        for (int i = 0; i < jobManager.Jobs.Count; i++)
+                        {
+                            var j = jobManager.Jobs[i];
+                            Console.WriteLine($"[{i + 1}] Nom : {j.Name} | Type : {j.Type}");
+                            Console.WriteLine($"    Source : {j.SourceDirectory}");
+                            Console.WriteLine($"    Cible  : {j.TargetDirectory}");
+                            Console.WriteLine(new string('-', 50));
+                        }
+                        Console.WriteLine();
+
                         Console.Write(isFrench ? "Entrez l'index (1-5) ou 'all' pour tout lancer : " : "Enter job index (1-5) or 'all' to run all: ");
                         string input = Console.ReadLine()?.Trim().ToLower();
 
@@ -120,8 +142,8 @@ namespace EasySave
                         {
                             var j = jobManager.Jobs[i];
                             Console.WriteLine($"[{i + 1}] Nom : {j.Name} | Type : {j.Type}");
-                            Console.WriteLine($"    Source : {j.SourceDirectory}");
-                            Console.WriteLine($"    Cible  : {j.TargetDirectory}");
+                            Console.WriteLine($"    Source : {j.SourceDirectory}");
+                            Console.WriteLine($"    Cible  : {j.TargetDirectory}");
                             Console.WriteLine(new string('-', 50));
                         }
                         Console.WriteLine();
@@ -148,6 +170,38 @@ namespace EasySave
                         break;
 
                     case "5":
+                        Console.WriteLine(isFrench
+                            ? $"\nFormat actuel des logs : {configManager.Config.LogFormat}"
+                            : $"\nCurrent log format: {configManager.Config.LogFormat}");
+
+                        Console.WriteLine(isFrench
+                            ? "Choisissez le nouveau format (1 = JSON, 2 = XML, q = Annuler) :"
+                            : "Choose new format (1 = JSON, 2 = XML, q = Cancel):");
+                        Console.Write("> ");
+
+                        string formatChoice = Console.ReadLine()?.Trim().ToLower() ?? "";
+
+                        if (formatChoice == "1")
+                        {
+                            configManager.Config.LogFormat = LogFormat.Json;
+                            Logger.Instance.Format = LogFormat.Json;
+                            configManager.SaveConfig();
+                            Console.WriteLine(isFrench ? "=> Format changé en JSON." : "=> Format changed to JSON.");
+                        }
+                        else if (formatChoice == "2")
+                        {
+                            configManager.Config.LogFormat = LogFormat.Xml;
+                            Logger.Instance.Format = LogFormat.Xml;
+                            configManager.SaveConfig();
+                            Console.WriteLine(isFrench ? "=> Format changé en XML." : "=> Format changed to XML.");
+                        }
+                        else if (formatChoice != "q")
+                        {
+                            Console.WriteLine(isFrench ? "Saisie invalide." : "Invalid input.");
+                        }
+                        break;
+
+                    case "6":
                         isRunning = false;
                         break;
                 }

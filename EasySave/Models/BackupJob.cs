@@ -8,7 +8,6 @@
         public string TargetDirectory { get; set; }
         public BackupType Type { get; set; }
 
-        // Default constructor required for JSON serialization.
         public BackupJob()
         {
         }
