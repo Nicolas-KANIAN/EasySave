@@ -1,6 +1,6 @@
 ﻿namespace EasyLog
 {
-    // Represents the real-time state of a backup job for tracking progress in state.json.
+    // Represents the real-time state of a backup job for tracking progress.
     public class StateEntry
     {
         public string Name { get; set; }
