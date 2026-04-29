@@ -69,4 +69,4 @@ Safely closes the EasySave application.
 
 During and after your backups, EasySave automatically generates reports in the `EasyLogs` folder (located in the same place as your application):
 - **Real-time tracking (`state.json` / `state.xml`)**: This file updates in real-time and allows you to track the exact progress of the ongoing transfer.
-- **Daily reports (`DailyLog_date.json`/ `DailyLog_{date}.xml`)**: Keeps a detailed history, transfer time, and size of each copied file on a day-to-day basis.
+- **Daily reports (`DailyLog_{date}.json` / `DailyLog_{date}.xml`)**: Keeps a detailed history, transfer time, and size of each copied file on a day-to-day basis.
