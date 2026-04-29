@@ -119,6 +119,32 @@ namespace EasySaveApp.ViewModels
         public ICommand DeleteJobCommand { get; }
         public ICommand SaveSettingsCommand { get; }
         public ICommand ClearFormCommand { get; }
+        public ICommand SetEnglishCommand { get; }
+        public ICommand SetFrenchCommand { get; }
+
+        private bool _isFrench;
+
+        public string HeaderSubtitle => _isFrench ? "Console de gestion des sauvegardes" : "Backup management console";
+        public string JobsTitle => _isFrench ? "Travaux de sauvegarde" : "Backup jobs";
+        public string JobsSubtitle => _isFrench ? "Créer, sélectionner, supprimer et lancer les travaux comme dans la console." : "Create, select, delete and run jobs just like in the console version.";
+        public string CreateJobTitle => _isFrench ? "Créer un travail" : "Create a job";
+        public string NameLabel => _isFrench ? "Nom" : "Name";
+        public string SourceLabel => _isFrench ? "Répertoire source" : "Source directory";
+        public string TargetLabel => _isFrench ? "Répertoire cible" : "Target directory";
+        public string BackupTypeLabel => _isFrench ? "Type de sauvegarde" : "Backup type";
+        public string SettingsTitle => _isFrench ? "Paramètres" : "Settings";
+        public string LogFormatLabel => _isFrench ? "Format des logs" : "Log format";
+        public string BusinessSoftwareLabel => _isFrench ? "Logiciel métier" : "Business software process";
+        public string ExtensionsLabel => _isFrench ? "Extensions à chiffrer" : "Extensions to encrypt";
+        public string CryptoKeyLabel => _isFrench ? "Clé CryptoSoft" : "Crypto key";
+        public string ActivityTitle => _isFrench ? "Activité" : "Activity";
+        public string RunSelectedText => _isFrench ? "Lancer sélection" : "Run selected";
+        public string RunAllText => _isFrench ? "Tout lancer" : "Run all";
+        public string DeleteSelectedText => _isFrench ? "Supprimer sélection" : "Delete selected";
+        public string CreateText => _isFrench ? "Créer" : "Create";
+        public string ClearText => _isFrench ? "Effacer" : "Clear";
+        public string SaveSettingsText => _isFrench ? "Sauvegarder" : "Save settings";
+        public string FooterText => _isFrench ? "Fonctions reprises de la console : créer, lister, lancer une sélection, tout lancer, supprimer, configurer les logs JSON/XML, le logiciel métier et le chiffrement." : "Features mirrored from console: create jobs, list jobs, run selected, run all sequentially, delete jobs, configure JSON/XML logs, business software blocking and encryption settings.";
 
         public MainWindowViewModel()
         {
@@ -144,8 +170,49 @@ namespace EasySaveApp.ViewModels
             DeleteJobCommand = new RelayCommand(DeleteSelectedJob);
             SaveSettingsCommand = new RelayCommand(SaveSettings);
             ClearFormCommand = new RelayCommand(ClearForm);
+            SetEnglishCommand = new RelayCommand(SetEnglish);
+            SetFrenchCommand = new RelayCommand(SetFrench);
 
             AddActivity("EasySave GUI initialized.");
+        }
+
+        private void SetEnglish()
+        {
+            _isFrench = false;
+            RefreshLanguage();
+            SetStatus("Language changed to English.");
+        }
+
+        private void SetFrench()
+        {
+            _isFrench = true;
+            RefreshLanguage();
+            SetStatus("Langue changée en français.");
+        }
+
+        private void RefreshLanguage()
+        {
+            OnPropertyChanged(nameof(HeaderSubtitle));
+            OnPropertyChanged(nameof(JobsTitle));
+            OnPropertyChanged(nameof(JobsSubtitle));
+            OnPropertyChanged(nameof(CreateJobTitle));
+            OnPropertyChanged(nameof(NameLabel));
+            OnPropertyChanged(nameof(SourceLabel));
+            OnPropertyChanged(nameof(TargetLabel));
+            OnPropertyChanged(nameof(BackupTypeLabel));
+            OnPropertyChanged(nameof(SettingsTitle));
+            OnPropertyChanged(nameof(LogFormatLabel));
+            OnPropertyChanged(nameof(BusinessSoftwareLabel));
+            OnPropertyChanged(nameof(ExtensionsLabel));
+            OnPropertyChanged(nameof(CryptoKeyLabel));
+            OnPropertyChanged(nameof(ActivityTitle));
+            OnPropertyChanged(nameof(RunSelectedText));
+            OnPropertyChanged(nameof(RunAllText));
+            OnPropertyChanged(nameof(DeleteSelectedText));
+            OnPropertyChanged(nameof(CreateText));
+            OnPropertyChanged(nameof(ClearText));
+            OnPropertyChanged(nameof(SaveSettingsText));
+            OnPropertyChanged(nameof(FooterText));
         }
 
         private void CreateJob()
@@ -282,7 +349,16 @@ namespace EasySaveApp.ViewModels
                     extension = "." + extension;
                 }
 
-                if (!extensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
+                bool extensionAlreadyExists = false;
+                foreach (string existingExtension in extensions)
+                {
+                    if (string.Equals(existingExtension, extension, StringComparison.OrdinalIgnoreCase))
+                    {
+                        extensionAlreadyExists = true;
+                    }
+                }
+
+                if (!extensionAlreadyExists)
                 {
                     extensions.Add(extension);
                 }

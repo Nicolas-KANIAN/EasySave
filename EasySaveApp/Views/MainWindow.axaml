@@ -21,20 +21,36 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,*">
         <Border Grid.Row="0" Background="#163B57" Padding="24,18">
             <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Spacing="4">
-                    <TextBlock Text="EasySave" FontSize="30" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Text="Backup management console" FontSize="14" Foreground="#C8D8E6"/>
+                <TextBlock Text="EasySave" FontSize="30" FontWeight="Bold" Foreground="White"/>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            VerticalAlignment="Center">
+                    <Button Command="{Binding SetFrenchCommand}"
+                            Padding="8,6"
+                            Background="#245B7D"
+                            CornerRadius="6">
+                        <Grid Width="30" Height="20" ColumnDefinitions="*,*,*">
+                            <Border Grid.Column="0" Background="#0055A4"/>
+                            <Border Grid.Column="1" Background="White"/>
+                            <Border Grid.Column="2" Background="#EF4135"/>
+                        </Grid>
+                    </Button>
+                    <Button Command="{Binding SetEnglishCommand}"
+                            Padding="8,6"
+                            Background="#245B7D"
+                            CornerRadius="6">
+                        <Grid Width="30" Height="20" Background="#012169">
+                            <Path Fill="White" Data="M 0,0 L 5,0 L 30,16 L 30,20 L 25,20 L 0,4 Z M 30,0 L 25,0 L 0,16 L 0,20 L 5,20 L 30,4 Z"/>
+                            <Path Fill="#C8102E" Data="M 0,0 L 3,0 L 30,17 L 30,20 L 27,20 L 0,3 Z M 30,0 L 27,0 L 0,17 L 0,20 L 3,20 L 30,3 Z"/>
+                            <Path Fill="White" Data="M 12,0 L 18,0 L 18,20 L 12,20 Z M 0,7 L 30,7 L 30,13 L 0,13 Z"/>
+                            <Path Fill="#C8102E" Data="M 14,0 L 16,0 L 16,20 L 14,20 Z M 0,9 L 30,9 L 30,11 L 0,11 Z"/>
+                        </Grid>
+                    </Button>
                 </StackPanel>
-                <Border Grid.Column="1"
-                        Background="#245B7D"
-                        CornerRadius="6"
-                        Padding="14,8"
-                        VerticalAlignment="Center">
-                    <TextBlock Text="{Binding StatusMessage}" Foreground="White" FontWeight="SemiBold"/>
-                </Border>
             </Grid>
         </Border>
 
@@ -57,9 +73,8 @@
                     <Grid RowDefinitions="Auto,*,Auto">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Spacing="4">
-                                <TextBlock Text="Backup jobs" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
-                                <TextBlock Text="Create, select, delete and run jobs just like in the console version."
-                                           Foreground="#66798A"/>
+                                <TextBlock Text="{Binding JobsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                                <TextBlock Text="{Binding JobsSubtitle}" Foreground="#66798A"/>
                             </StackPanel>
                             <TextBlock Grid.Column="1"
                                        Text="{Binding Jobs.Count, StringFormat='{}{0} jobs'}"
@@ -107,21 +122,21 @@
                         </ListBox>
 
                         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
-                            <Button Content="Run selected"
+                            <Button Content="{Binding RunSelectedText}"
                                     Command="{Binding RunJobCommand}"
                                     IsEnabled="{Binding IsReady}"
                                     Background="#1F6F9F"
                                     Foreground="White"
                                     Padding="18,10"
                                     CornerRadius="6"/>
-                            <Button Content="Run all"
+                            <Button Content="{Binding RunAllText}"
                                     Command="{Binding RunAllJobsCommand}"
                                     IsEnabled="{Binding IsReady}"
                                     Background="#244F38"
                                     Foreground="White"
                                     Padding="18,10"
                                     CornerRadius="6"/>
-                            <Button Content="Delete selected"
+                            <Button Content="{Binding DeleteSelectedText}"
                                     Command="{Binding DeleteJobCommand}"
                                     IsEnabled="{Binding HasSelectedJob}"
                                     Background="#B94A48"
@@ -139,7 +154,7 @@
                         CornerRadius="8"
                         Padding="18">
                     <Grid RowDefinitions="Auto,*">
-                        <TextBlock Text="Activity" FontSize="18" FontWeight="Bold" Foreground="#152C3F"/>
+                        <TextBlock Text="{Binding ActivityTitle}" FontSize="18" FontWeight="Bold" Foreground="#152C3F"/>
                         <ListBox Grid.Row="1"
                                  ItemsSource="{Binding ActivityMessages}"
                                  Height="90"
@@ -159,30 +174,30 @@
                             CornerRadius="8"
                             Padding="18">
                         <StackPanel Spacing="12">
-                            <TextBlock Text="Create a job" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                            <TextBlock Text="{Binding CreateJobTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
 
-                            <TextBlock Text="Name" Foreground="#52687A"/>
+                            <TextBlock Text="{Binding NameLabel}" Foreground="#52687A"/>
                             <TextBox Text="{Binding JobName}" Watermark="Daily documents backup"/>
 
-                            <TextBlock Text="Source directory" Foreground="#52687A"/>
+                            <TextBlock Text="{Binding SourceLabel}" Foreground="#52687A"/>
                             <TextBox Text="{Binding SourceDirectory}" Watermark="C:\SourceFolder"/>
 
-                            <TextBlock Text="Target directory" Foreground="#52687A"/>
+                            <TextBlock Text="{Binding TargetLabel}" Foreground="#52687A"/>
                             <TextBox Text="{Binding TargetDirectory}" Watermark="D:\BackupFolder"/>
 
-                            <TextBlock Text="Backup type" Foreground="#52687A"/>
+                            <TextBlock Text="{Binding BackupTypeLabel}" Foreground="#52687A"/>
                             <ComboBox ItemsSource="{Binding BackupTypes}"
                                       SelectedItem="{Binding SelectedBackupType}"
                                       HorizontalAlignment="Stretch"/>
 
                             <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
-                                <Button Content="Create"
+                                <Button Content="{Binding CreateText}"
                                         Command="{Binding CreateJobCommand}"
                                         Background="#1F6F9F"
                                         Foreground="White"
                                         Padding="18,10"
                                         CornerRadius="6"/>
-                                <Button Content="Clear"
+                                <Button Content="{Binding ClearText}"
                                         Command="{Binding ClearFormCommand}"
                                         Padding="18,10"
                                         CornerRadius="6"/>
@@ -196,23 +211,23 @@
                             CornerRadius="8"
                             Padding="18">
                         <StackPanel Spacing="12">
-                            <TextBlock Text="Settings" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                            <TextBlock Text="{Binding SettingsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
 
-                            <TextBlock Text="Log format" Foreground="#52687A"/>
+                            <TextBlock Text="{Binding LogFormatLabel}" Foreground="#52687A"/>
                             <ComboBox ItemsSource="{Binding LogFormats}"
                                       SelectedItem="{Binding SelectedLogFormat}"
                                       HorizontalAlignment="Stretch"/>
 
-                            <TextBlock Text="Business software process" Foreground="#52687A"/>
+                            <TextBlock Text="{Binding BusinessSoftwareLabel}" Foreground="#52687A"/>
                             <TextBox Text="{Binding BusinessSoftware}" Watermark="calculator.exe"/>
 
-                            <TextBlock Text="Extensions to encrypt" Foreground="#52687A"/>
+                            <TextBlock Text="{Binding ExtensionsLabel}" Foreground="#52687A"/>
                             <TextBox Text="{Binding ExtensionsToEncrypt}" Watermark=".txt; .pdf; .docx"/>
 
-                            <TextBlock Text="Crypto key" Foreground="#52687A"/>
+                            <TextBlock Text="{Binding CryptoKeyLabel}" Foreground="#52687A"/>
                             <TextBox Text="{Binding CryptoKey}" Watermark="EasySave2026"/>
 
-                            <Button Content="Save settings"
+                            <Button Content="{Binding SaveSettingsText}"
                                     Command="{Binding SaveSettingsCommand}"
                                     Background="#1F6F9F"
                                     Foreground="White"
@@ -221,14 +236,8 @@
                                     HorizontalAlignment="Left"/>
                         </StackPanel>
                     </Border>
-
                 </StackPanel>
             </ScrollViewer>
         </Grid>
-
-        <Border Grid.Row="2" Background="#E7EEF5" Padding="24,10">
-            <TextBlock Text="Features mirrored from console: create jobs, list jobs, run selected, run all sequentially, delete jobs, configure JSON/XML logs, business software blocking and encryption settings."
-                       Foreground="#52687A"/>
-        </Border>
     </Grid>
 </Window>
