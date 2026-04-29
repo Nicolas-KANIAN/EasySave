@@ -9,6 +9,7 @@ namespace EasyLog
         public string TargetFile { get; set; }
         public long FileSize { get; set; }
         public long TransferTime { get; set; }
+        public long EncryptionTime { get; set; }
         public LogEntry()
         {
             Timestamp = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");

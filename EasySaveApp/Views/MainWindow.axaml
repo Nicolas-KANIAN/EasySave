@@ -1,0 +1,41 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:EasySaveApp.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="EasySaveApp.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="EasySave 2.0 - ProSoft"
+        Width="700" Height="450">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <StackPanel Margin="20" Spacing="15">
+        <TextBlock Text="EasySave - Travaux de Sauvegarde" FontSize="24" FontWeight="Bold" Foreground="#2b579a"/>
+        
+        <ListBox ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}" Height="250" Background="#f0f0f0" CornerRadius="5">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="15" Margin="5">
+                        <TextBlock Text="{Binding Name}" FontWeight="Bold" Width="150"/>
+                        <TextBlock Text="{Binding Type}" Width="100" Foreground="DarkOrange"/>
+                        <TextBlock Text="{Binding SourceDirectory}" Foreground="Gray"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Button Content="▶ Lancer la sauvegarde sélectionnée" 
+                Command="{Binding RunJobCommand}" 
+                HorizontalAlignment="Center" 
+                Padding="15,10" 
+                Background="#2b579a" 
+                Foreground="White"
+                FontSize="16"
+                CornerRadius="5"/>
+    </StackPanel>
+</Window>
