@@ -36,7 +36,8 @@ namespace EasySaveApp.ViewModels
                     JobName = _selectedJob.Name;
                     SourceDirectory = _selectedJob.SourceDirectory;
                     TargetDirectory = _selectedJob.TargetDirectory;
-                    SelectedBackupType = _selectedJob.Type.ToString();
+                    // Utilise la traduction pour préremplir
+                    SelectedBackupType = _selectedJob.Type == BackupType.Full ? FullText : DiffText;
                 }
             }
         }
@@ -160,6 +161,14 @@ namespace EasySaveApp.ViewModels
 
         private bool _isFrench;
 
+        // --- TRADUCTIONS ---
+        public string FullText => _isFrench ? "Complet" : "Full";
+        public string DiffText => _isFrench ? "Différentiel" : "Differential";
+        public string TabJobHeader => _isFrench ? "Tâches" : "Jobs";
+        public string TabSettingsHeader => _isFrench ? "Paramètres" : "Settings";
+        public string TabLogsHeader => _isFrench ? "Journaux" : "Logs";
+        public string DateLabel => _isFrench ? "Date" : "Date";
+
         public string JobsTitle => _isFrench ? "Travaux de sauvegarde" : "Backup jobs";
         public string JobsSubtitle => _isFrench ? "Creer, modifier, supprimer et lancer les travaux." : "Create, update, delete and run jobs.";
         public string CreateJobTitle => _isFrench ? "Travail" : "Job";
@@ -198,7 +207,11 @@ namespace EasySaveApp.ViewModels
 
             Jobs = new ObservableCollection<BackupJob>(_jobManager.Jobs);
             ActivityMessages = new ObservableCollection<string>();
-            BackupTypes = new ObservableCollection<string> { "Full", "Differential" };
+
+            // Initialisation avec la traduction
+            BackupTypes = new ObservableCollection<string> { FullText, DiffText };
+            SelectedBackupType = FullText;
+
             LogFormats = new ObservableCollection<string> { "Json", "Xml" };
 
             SelectedLogFormat = _configManager.Config.LogFormat.ToString();
@@ -237,6 +250,12 @@ namespace EasySaveApp.ViewModels
 
         private void RefreshLanguage()
         {
+            OnPropertyChanged(nameof(FullText));
+            OnPropertyChanged(nameof(DiffText));
+            OnPropertyChanged(nameof(TabJobHeader));
+            OnPropertyChanged(nameof(TabSettingsHeader));
+            OnPropertyChanged(nameof(TabLogsHeader));
+            OnPropertyChanged(nameof(DateLabel));
             OnPropertyChanged(nameof(JobsTitle));
             OnPropertyChanged(nameof(JobsSubtitle));
             OnPropertyChanged(nameof(CreateJobTitle));
@@ -264,6 +283,13 @@ namespace EasySaveApp.ViewModels
             OnPropertyChanged(nameof(SaveSettingsText));
             OnPropertyChanged(nameof(LoadLogsText));
             OnPropertyChanged(nameof(LoadTodayLogsText));
+
+            // Met à jour la liste déroulante en gardant la sélection
+            bool isFull = SelectedBackupType == "Full" || SelectedBackupType == "Complet";
+            BackupTypes.Clear();
+            BackupTypes.Add(FullText);
+            BackupTypes.Add(DiffText);
+            SelectedBackupType = isFull ? FullText : DiffText;
         }
 
         private void CreateJob()
@@ -276,7 +302,9 @@ namespace EasySaveApp.ViewModels
             string name = JobName.Trim();
             string source = SourceDirectory.Trim().Trim('"');
             string target = TargetDirectory.Trim().Trim('"');
-            BackupType type = SelectedBackupType == "Full" ? BackupType.Full : BackupType.Differential;
+
+            // Vérification avec la traduction
+            BackupType type = SelectedBackupType == FullText ? BackupType.Full : BackupType.Differential;
 
             BackupJob newJob = new BackupJob(name, source, target, type);
 
@@ -310,11 +338,14 @@ namespace EasySaveApp.ViewModels
                 return;
             }
 
+            // Vérification avec la traduction
+            BackupType type = SelectedBackupType == FullText ? BackupType.Full : BackupType.Differential;
+
             BackupJob updatedJob = new BackupJob(
                 updatedJobName,
                 SourceDirectory.Trim().Trim('"'),
                 TargetDirectory.Trim().Trim('"'),
-                SelectedBackupType == "Full" ? BackupType.Full : BackupType.Differential);
+                type);
 
             _jobManager.UpdateJob(index, updatedJob);
             Jobs[index] = updatedJob;
@@ -546,7 +577,7 @@ namespace EasySaveApp.ViewModels
             JobName = string.Empty;
             SourceDirectory = string.Empty;
             TargetDirectory = string.Empty;
-            SelectedBackupType = "Full";
+            SelectedBackupType = FullText; // Remis à la valeur traduite
             ValidationMessage = string.Empty;
         }
 

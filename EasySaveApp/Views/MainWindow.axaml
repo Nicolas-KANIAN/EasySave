@@ -55,7 +55,7 @@
         </Border>
 
         <TabControl Grid.Row="1" Margin="24">
-            <TabItem Header="Job">
+            <TabItem Header="{Binding TabJobHeader}">
                 <Grid ColumnDefinitions="1.2*,0.95*" ColumnSpacing="20" Margin="0,16,0,0">
                     <Grid Grid.Column="0" RowDefinitions="*,Auto,Auto" RowSpacing="20">
                         <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
@@ -144,10 +144,22 @@
                             <TextBox Text="{Binding JobName}" Watermark="Daily documents backup"/>
 
                             <TextBlock Text="{Binding SourceLabel}" Foreground="#52687A"/>
-                            <TextBox Text="{Binding SourceDirectory}" Watermark="C:\SourceFolder"/>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox Grid.Column="0" Text="{Binding SourceDirectory}" Watermark="C:\SourceFolder"/>
+                                    <Button Grid.Column="1" Content="..." Width="35" Margin="8,0,0,0" 
+                                            Click="OnBrowseSourceClick" 
+                                            Background="#EAF3F8" Foreground="#152C3F" 
+                                            HorizontalContentAlignment="Center"/>
+                                </Grid>
 
                             <TextBlock Text="{Binding TargetLabel}" Foreground="#52687A"/>
-                            <TextBox Text="{Binding TargetDirectory}" Watermark="D:\BackupFolder"/>
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                                <TextBox Grid.Column="0" Text="{Binding TargetDirectory}" Watermark="D:\BackupFolder"/>
+                                <Button Grid.Column="1" Content="..." Width="35" Margin="8,0,0,0" 
+                                        Click="OnBrowseTargetClick" 
+                                        Background="#EAF3F8" Foreground="#152C3F" 
+                                        HorizontalContentAlignment="Center"/>
+                            </Grid>
 
                             <TextBlock Text="{Binding BackupTypeLabel}" Foreground="#52687A"/>
                             <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding SelectedBackupType}" HorizontalAlignment="Stretch"/>
@@ -166,7 +178,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="Parametres">
+            <TabItem Header="{Binding TabSettingsHeader}">
                 <ScrollViewer Margin="0,16,0,0">
                     <StackPanel Spacing="20">
                         <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
@@ -203,11 +215,11 @@
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="Logs">
+            <TabItem Header="{Binding TabLogsHeader}">
                 <Grid RowDefinitions="Auto,*" RowSpacing="16" Margin="0,16,0,0">
                     <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                         <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="Date" VerticalAlignment="Center" Foreground="#52687A"/>
+                            <TextBlock Text="{Binding DateLabel}" VerticalAlignment="Center" Foreground="#52687A"/>
                             <TextBox Text="{Binding LogDate}" Width="160" Watermark="yyyy-MM-dd"/>
                             <Button Content="{Binding LoadLogsText}" Command="{Binding LoadLogsCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
                             <Button Content="{Binding LoadTodayLogsText}" Command="{Binding LoadTodayLogsCommand}" Padding="18,10" CornerRadius="6"/>
