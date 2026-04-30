@@ -51,6 +51,16 @@ namespace EasySave.Services
             SaveJobs();
         }
 
+        // Updates an existing job and saves changes to the JSON file.
+        public void UpdateJob(int index, BackupJob updatedJob)
+        {
+            if (index >= 0 && index < Jobs.Count)
+            {
+                Jobs[index] = updatedJob;
+                SaveJobs();
+            }
+        }
+
         // Removes a job by its index and updates the configuration file.
         public void DeleteJob(int index)
         {

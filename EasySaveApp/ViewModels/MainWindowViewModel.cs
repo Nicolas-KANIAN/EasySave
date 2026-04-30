@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using EasyLog;
@@ -26,6 +29,15 @@ namespace EasySaveApp.ViewModels
             {
                 SetProperty(ref _selectedJob, value);
                 OnPropertyChanged(nameof(HasSelectedJob));
+
+                // Préremplissage du formulaire lorsqu'un travail est sélectionné
+                if (_selectedJob != null)
+                {
+                    JobName = _selectedJob.Name;
+                    SourceDirectory = _selectedJob.SourceDirectory;
+                    TargetDirectory = _selectedJob.TargetDirectory;
+                    SelectedBackupType = _selectedJob.Type.ToString();
+                }
             }
         }
 
@@ -114,6 +126,7 @@ namespace EasySaveApp.ViewModels
         }
 
         public ICommand CreateJobCommand { get; }
+        public ICommand UpdateJobCommand { get; } // Ajout de la commande
         public ICommand RunJobCommand { get; }
         public ICommand RunAllJobsCommand { get; }
         public ICommand DeleteJobCommand { get; }
@@ -126,7 +139,7 @@ namespace EasySaveApp.ViewModels
 
         public string HeaderSubtitle => _isFrench ? "Console de gestion des sauvegardes" : "Backup management console";
         public string JobsTitle => _isFrench ? "Travaux de sauvegarde" : "Backup jobs";
-        public string JobsSubtitle => _isFrench ? "Créer, sélectionner, supprimer et lancer les travaux comme dans la console." : "Create, select, delete and run jobs just like in the console version.";
+        public string JobsSubtitle => _isFrench ? "Créer, sélectionner, supprimer et lancer les travaux." : "Create, select, delete and run jobs.";
         public string CreateJobTitle => _isFrench ? "Créer un travail" : "Create a job";
         public string NameLabel => _isFrench ? "Nom" : "Name";
         public string SourceLabel => _isFrench ? "Répertoire source" : "Source directory";
@@ -142,9 +155,10 @@ namespace EasySaveApp.ViewModels
         public string RunAllText => _isFrench ? "Tout lancer" : "Run all";
         public string DeleteSelectedText => _isFrench ? "Supprimer sélection" : "Delete selected";
         public string CreateText => _isFrench ? "Créer" : "Create";
+        public string UpdateText => _isFrench ? "Modifier" : "Update"; // Ajout du texte pour le bouton
         public string ClearText => _isFrench ? "Effacer" : "Clear";
         public string SaveSettingsText => _isFrench ? "Sauvegarder" : "Save settings";
-        public string FooterText => _isFrench ? "Fonctions reprises de la console : créer, lister, lancer une sélection, tout lancer, supprimer, configurer les logs JSON/XML, le logiciel métier et le chiffrement." : "Features mirrored from console: create jobs, list jobs, run selected, run all sequentially, delete jobs, configure JSON/XML logs, business software blocking and encryption settings.";
+        public string FooterText => _isFrench ? "Fonctions reprises de la console : créer, lister, lancer, supprimer, configurer logs et chiffrement." : "Features mirrored from console: create, list, run, delete, configure logs and encryption.";
 
         public MainWindowViewModel()
         {
@@ -165,6 +179,7 @@ namespace EasySaveApp.ViewModels
             CryptoKey = _configManager.Config.CryptoKey;
 
             CreateJobCommand = new RelayCommand(CreateJob);
+            UpdateJobCommand = new RelayCommand(UpdateJob); // Initialisation de la commande
             RunJobCommand = new AsyncRelayCommand(RunSelectedJob);
             RunAllJobsCommand = new AsyncRelayCommand(RunAllJobs);
             DeleteJobCommand = new RelayCommand(DeleteSelectedJob);
@@ -210,6 +225,7 @@ namespace EasySaveApp.ViewModels
             OnPropertyChanged(nameof(RunAllText));
             OnPropertyChanged(nameof(DeleteSelectedText));
             OnPropertyChanged(nameof(CreateText));
+            OnPropertyChanged(nameof(UpdateText)); // Rafraîchissement du texte
             OnPropertyChanged(nameof(ClearText));
             OnPropertyChanged(nameof(SaveSettingsText));
             OnPropertyChanged(nameof(FooterText));
@@ -238,6 +254,39 @@ namespace EasySaveApp.ViewModels
             SelectedJob = newJob;
             ClearForm();
             SetStatus($"Job '{newJob.Name}' created.");
+        }
+
+        // Ajout de la méthode UpdateJob
+        private void UpdateJob()
+        {
+            if (SelectedJob == null) return;
+
+            if (string.IsNullOrWhiteSpace(JobName) ||
+                string.IsNullOrWhiteSpace(SourceDirectory) ||
+                string.IsNullOrWhiteSpace(TargetDirectory))
+            {
+                SetStatus("Name, source and target are required.");
+                return;
+            }
+
+            string updatedJobName = JobName.Trim();
+
+            SelectedJob.Name = updatedJobName;
+            SelectedJob.SourceDirectory = SourceDirectory.Trim().Trim('"');
+            SelectedJob.TargetDirectory = TargetDirectory.Trim().Trim('"');
+            SelectedJob.Type = SelectedBackupType == "Full" ? BackupType.Full : BackupType.Differential;
+
+            int index = Jobs.IndexOf(SelectedJob);
+            if (index != -1)
+            {
+                _jobManager.UpdateJob(index, SelectedJob);
+                Jobs[index] = SelectedJob;
+            }
+
+            SetStatus($"Job '{updatedJobName}' updated.");
+            ClearForm();
+
+            SelectedJob = null;
         }
 
         private async Task RunSelectedJob()
