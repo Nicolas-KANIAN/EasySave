@@ -15,7 +15,8 @@ namespace EasySave
             Logger.Instance.Format = configManager.Config.LogFormat;
 
             JobManager jobManager = new JobManager();
-            BackupEngine engine = new BackupEngine();
+
+            BackupEngine engine = new BackupEngine(configManager.Config);
 
             // CLI Mode: Executes specific jobs if arguments are provided (e.g., "1-3" or "1;3")
             if (args.Length > 0)
@@ -45,25 +46,20 @@ namespace EasySave
                 Console.WriteLine(isFrench ? "6. Quitter" : "6. Exit");
                 Console.Write("> ");
 
-                string choice = Console.ReadLine();
+                string choice = Console.ReadLine() ?? "";
 
                 switch (choice)
                 {
                     case "1":
-                        if (jobManager.Jobs.Count >= 5)
-                        {
-                            Console.WriteLine(isFrench ? "[ERREUR] Limite de 5 travaux atteinte." : "[ERROR] Limit of 5 jobs reached.");
-                            break;
-                        }
-
+                        // CORRECTION ICI : Suppression de la limite des 5 travaux pour la V2.0
                         Console.Write(isFrench ? "Nom du travail : " : "Job Name: ");
-                        string name = Console.ReadLine();
+                        string name = Console.ReadLine() ?? "";
 
                         Console.Write(isFrench ? "Répertoire Source (ex: C:\\Dossier) : " : "Source Directory (e.g., C:\\Folder): ");
-                        string source = Console.ReadLine()?.Trim('"');
+                        string source = Console.ReadLine()?.Trim('"') ?? "";
 
                         Console.Write(isFrench ? "Répertoire Cible (ex: D:\\Backup) : " : "Target Directory (e.g., D:\\Backup): ");
-                        string target = Console.ReadLine()?.Trim('"');
+                        string target = Console.ReadLine()?.Trim('"') ?? "";
 
                         Console.Write(isFrench ? "Type (0 = Complet, 1 = Différentiel) : " : "Type (0 = Full, 1 = Differential): ");
                         BackupType type = Console.ReadLine() == "0" ? BackupType.Full : BackupType.Differential;
@@ -109,8 +105,8 @@ namespace EasySave
                         }
                         Console.WriteLine();
 
-                        Console.Write(isFrench ? "Entrez l'index (1-5) ou 'all' pour tout lancer : " : "Enter job index (1-5) or 'all' to run all: ");
-                        string input = Console.ReadLine()?.Trim().ToLower();
+                        Console.Write(isFrench ? "Entrez l'index ou 'all' pour tout lancer : " : "Enter job index or 'all' to run all: ");
+                        string input = Console.ReadLine()?.Trim().ToLower() ?? "";
 
                         if (input == "all")
                         {
@@ -149,7 +145,7 @@ namespace EasySave
                         Console.WriteLine();
 
                         Console.Write(isFrench ? "Entrez l'index à supprimer (ou 'q' pour annuler) : " : "Enter index to delete (or 'q' to cancel): ");
-                        string inputDelete = Console.ReadLine()?.Trim().ToLower();
+                        string inputDelete = Console.ReadLine()?.Trim().ToLower() ?? "";
 
                         if (inputDelete == "q")
                         {

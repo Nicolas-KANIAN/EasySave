@@ -166,5 +166,26 @@ namespace EasyLog
                 }
             }
         }
+
+        public string ReadStateFileSafely(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+                return string.Empty;
+
+            try
+            {
+                using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var streamReader = new StreamReader(fileStream);
+                return streamReader.ReadToEnd();
+            }
+            catch (IOException)
+            {
+                return string.Empty;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return string.Empty;
+            }
+        }
     }
 }
