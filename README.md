@@ -27,6 +27,7 @@ The project follows an iterative, accelerated development cycle divided into thr
 * **Format:** C# Console Application.
 * **Features:** Creation of up to 5 sequential backup jobs (Full or Differential).
   * Implementation of the `EasyLog.dll` library for real-time state tracking and daily JSON logs.
+  * **v1.1 Update:** Dynamic log formatting (JSON or XML) managed via a global `config.json` application settings file.
 * **Engineering:** Setup of GitHub CI/CD, Unit Tests (`xUnit`), CodeRabbit AI integration, and initial UML diagrams.
 
 ### Phase 2: The Interface (Deliverable 2 - EasySave v2.0)
@@ -84,6 +85,7 @@ Le projet suit un cycle de développement itératif et accéléré divisé en tr
 * **Format :** Application Console C#.
 * **Fonctionnalités :** Création de jusqu'à 5 travaux de sauvegarde séquentiels (Complets ou Différentiels).
   * Implémentation de la bibliothèque `EasyLog.dll` pour le suivi de l'état en temps réel et les journaux JSON quotidiens.
+  * **Mise à jour v1.1 :** Formatage dynamique des logs (JSON ou XML) géré via un fichier de configuration global `config.json`.
 * **Ingénierie :** Mise en place de la CI/CD GitHub, Tests Unitaires (`xUnit`), intégration de l'IA CodeRabbit et premiers diagrammes UML.
 
 ### Phase 2 : L'Interface (Livrable 2 - EasySave v2.0)

@@ -32,23 +32,23 @@ Afin d'organiser au mieux notre projet, nous avons décidé de suivre un gitflow
 L'application est portable. Tous les fichiers de configuration et de logs sont stockés dans le dossier où est présent l'exécutable `EasySave.exe`.
 
 ### Configuration Générale (`config.json`)
-- **Emplacement** : `<Dossier_Application>/EasyLogs/config.json`
+- **Emplacement** : `<Dossier_Application>/Logs/config.json`
 - **Paramètres globaux** :
   - `LogFormat` : Format d'écriture des fichiers de logs (`.Json`).
   - `Language` : Langue de l'interface console (`en` ou `fr`).
 
 ### Configuration des Travaux (`jobs.json`)
-- **Emplacement** : `<Dossier_Application>/EasyLogs/jobs.json`
+- **Emplacement** : `<Dossier_Application>/Logs/jobs.json`
 - **Format** : Tableau JSON d'objets `BackupJob` (Name, Source, Target, Type).
 - **Règle Métier** : Limité techniquement à 5 travaux maximum. Si ce fichier est supprimé, la liste sera vide au prochain lancement.
 
 ### Journaux d'Activité (`DailyLog_{date}`)
-- **Emplacement** : `<Dossier_Application>/EasyLogs/DailyLog_{dd_MM_yyyy}.json`
+- **Emplacement** : `<Dossier_Application>/Logs/DailyLog_{dd_MM_yyyy}.{json|xml}`
 - **Format** : Un fichier par jour généré par la DLL `EasyLog` en JSON ou XML.
 - **Contenu** : Détail de chaque transfert (`Timestamp`, `Name`, `Source`, `Target`, `FileSize`, `TransferTimeMs`).
 
-### Fichier d'État temps réel (`state.json`)
-- **Emplacement** : `<Dossier_Application>/EasyLogs/state.json`
+### Fichier d'État temps réel (`state.json` / `state.xml`)
+- **Emplacement** : `<Dossier_Application>/Logs/state.{json|xml}`
 - **Contenu** : État d'avancement du travail en cours (`Progression`, `TotalFilesToCopy`, `NbFilesLeftToDo`, `RemainingFilesSize`, `State`).
 - **Comportement** : Réécrit dynamiquement à chaque transfert de fichier.
 - **Format** : JSON ou XML.

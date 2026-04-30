@@ -68,5 +68,5 @@ Ferme proprement l'application EasySave.
 ## Fichiers de suivi (Logs)
 
 Pendant et après vos sauvegardes, EasySave génère automatiquement des rapports dans le dossier `EasyLogs` (situé au même endroit que votre application) :
-- **Suivi en direct (`state.json`)** : Ce fichier se met à jour en temps réel et vous permet de suivre la progression exacte du transfert en cours.
-- **Rapports journaliers (`DailyLog_date.json`)** : Conserve l'historique détaillé, le temps de transfert et la taille de chaque fichier copié au jour le jour.
+- **Suivi en direct (`state.json` / `state.xml`)** : Ce fichier se met à jour en temps réel et vous permet de suivre la progression exacte du transfert en cours.
+- **Rapports journaliers (`DailyLog_{date}.json` / `DailyLog_{date}.xml`)** : Conserve l'historique détaillé, le temps de transfert et la taille de chaque fichier copié au jour le jour.
