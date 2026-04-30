@@ -13,7 +13,7 @@ namespace EasySave.Services
         public string BusinessSoftware { get; set; } = string.Empty;
 
         public string CryptoSoftPath { get; set; } = "CryptoSoft.exe";
-        public string CryptoKey { get; set; } = "EasySave2026";
+        public string CryptoKey { get; set; } = string.Empty;
     }
 
     public class ConfigManager

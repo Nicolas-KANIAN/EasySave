@@ -9,7 +9,9 @@ namespace EasySave.Tests.Services
         [Fact]
         public void ExecuteJob_ShouldNotCrash_WhenSourceDirectoryDoesNotExist()
         {
-            var engine = new BackupEngine();
+            var dummyConfig = new AppConfig();
+            var engine = new BackupEngine(dummyConfig);
+
             string fakeSource = "Z:\\FolderThatDoesNotExist_123456";
             var job = new BackupJob("ImpossibleJob", fakeSource, "C:\\Dest", BackupType.Full);
 

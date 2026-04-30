@@ -1,10 +1,11 @@
 ﻿using EasyLog;
 
-namespace EasySave.Tests.EasyLogTests
+namespace EasySaveApp.Tests.EasyLogTests
 {
     public class LogFileUniquenessTests
     {
-        // Verifies the Singleton pattern implementation. It ensures that multiple calls to the Logger instance always return the exact same object in memory, preventing file access conflicts.
+        // Verifies the Singleton pattern implementation of the Logger. 
+        // This is crucial to prevent file access conflicts when multiple backup jobs try to write logs at the exact same time.
         [Fact]
         public void LoggerInstance_ShouldBeASingleton_AndReturnSameObject()
         {
