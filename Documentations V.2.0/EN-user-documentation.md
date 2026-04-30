@@ -1,84 +1,74 @@
-# User Manual
+# User Manual - EasySave V2.0
 
-Welcome to EasySave, a modern, reliable, and high-performance backup solution developed by our team. 
+Welcome to **EasySave**, a modern, reliable, and high-performance backup solution developed by our team.
 
-In this manual, you will find an overview of the application's main features and instructions on how to use them.
+In this manual, you will find an overview of the application's main features and how to use them.
 
-Version 2.0 marks a major evolution with an intuitive Graphical User Interface (WPF) and advanced security features.
+Version 2.0 marks a major evolution with an intuitive Graphical User Interface (WPF) organized by tabs for simplified data management.
+
+---
+
+## Language Selection
+
+You can instantly change the application's language by clicking the **flag icons (French or English)** located in the top-right corner of the window.
 
 ---
 
 ## Getting Started
 
-To launch the application, double-click the `EasySave.exe` executable. 
-The interface is divided into three main areas:
-1. **Backup Jobs (Left)**: The list of your jobs and action buttons (Run/Delete).
-2. **Create/Update a Job (Top Right)**: The form used to configure your backups.
-3. **Settings & Activity (Bottom)**: Global configuration and the real-time event log.
+To launch the application, double-click the `EasySave.exe` executable.
+
+The interface is divided into three tabs:
+1. **Jobs**
+2. **Settings**
+3. **Logs**
 
 ---
 
-## Language Selection
-No more typing numbers! Simply click on the **flags (French or English)** located at the top right of the window to instantly change the interface language.
+## 1. Jobs Tab
+This is the main screen for managing and executing your backup tasks.
+
+### Backup Jobs (Left)
+* **Job List**: Displays all created jobs.
+* **Run selected**: Executes only the jobs checked or selected in the list.
+* **Run all**: Launches all jobs in the list sequentially.
+* **Delete**: Permanently removes the selected job.
+* **Activity & Real-time Logs**: Located at the bottom, these boxes display system events and live file transfer progress.
+
+### Job Form (Right)
+To configure a backup:
+1. **Name**: Enter a unique name to identify the job.
+2. **Source directory**: Enter the path of the folder to be backed up.
+3. **Target directory**: Enter the destination path.
+4. **Backup type**: Choose between **Full** (all files) or **Differential** (only modified files).
+5. **Actions**:
+    * Click **Create** to add a new job.
+    * Select an existing job from the list to enable the **Update** button.
+    * Use **Clear** to empty the form fields.
 
 ---
 
-## Managing Backup Jobs
+## 2. Settings Tab
+This tab allows you to configure global application rules.
 
-Unlike the previous version, you can now create an **unlimited number** of backup jobs.
+### Logs
+* **Log format**: Choose between **Json** or **Xml** for generating your daily activity reports.
 
-### 1. Create a Job
-In the **"Create a job"** section:
-- **Name**: A unique name to identify your backup.
-- **Source directory**: Click in the field and enter the path of the folder to be backed up.
-- **Target directory**: Enter the path where the files will be copied.
-- **Backup type**: Select **Full** or **Differential** from the dropdown menu.
-- Click **Create**.
+### Encryption (CryptoSoft)
+* **Extensions to encrypt**: Define the file types to be secured (e.g., `.txt; .pdf; .docx`).
+* **Crypto Key**: Define the secret key used by the CryptoSoft encryption engine.
 
-### 2. Update a Job (New in V.2.0)
-To modify an existing configuration:
-1. **Select** the desired job from the list on the left.
-2. The information will automatically appear in the form on the right.
-3. Modify the necessary fields (Name, Source, Target, or Type).
-4. Click the **Update** button.
+### Business Software
+* **Business software process**: Enter the name of the priority software (e.g., `calculator.exe`). EasySave will automatically **pause** any backup if this process is detected running.
 
-### 3. Delete a Job
-Select one or more jobs from the list, then click the **Delete selected** button located below the list. 
+> **Note**: Don't forget to click the **Save** button at the bottom to apply your changes.
 
 ---
 
-## Running Backups
+## 3. Logs Tab
+This tab is dedicated to viewing your backup history.
 
-You can start your backups in two ways:
-- **Run selected**: Select the jobs you wish to launch and click this button.
-- **Run all**: Launches all jobs in the list one after the other.
-
-### Security: Business Software
-EasySave 2.0 monitors if a specific professional software (e.g., `calculator.exe`) is open. 
-- If the software is detected at startup, the backup is blocked to prevent file conflicts.
-- If it is opened during a backup, EasySave immediately puts the process on **pause**.
-
----
-
-## Settings 
-
-The **Settings** section at the bottom right allows you to configure the application's global behavior:
-- **Log format**: Choose between **JSON** or **XML** for your reports.
-- **Business software process**: Enter the name of the process to monitor (e.g., `calculator.exe`).
-- **Extensions to encrypt**: Enter the file extensions to be encrypted (e.g., `.txt;.pdf`).
-- **Crypto key**: Define your secret key for encryption via **CryptoSoft**.
-
-*Don't forget to click **Save settings** to apply your changes.*
-
----
-
-## Tracking and Logs
-
-EasySave generates two types of tracking files in the application folder:
-1. **Real-time tracking (`state.json`)**: This file updates in real-time and allows you to track the exact progress of the current transfer.
-2. **Daily reports (`DailyLog_date.json`)**: Keeps a detailed history, transfer time, and size of each copied file on a day-to-day basis. In V.2.0, these logs now include the **encryption time (in ms)** for files secured via CryptoSoft.
-
----
-
-## Activity Logs
-The **Activity** zone at the bottom left of the screen informs you live of every action: successful creation, directory error, business software detection, or backup completion.
+* **Date Picker**: Choose a specific date to view the corresponding logs.
+* **Open logs**: Loads and displays the content of the log file for the selected date in the viewer.
+* **Today logs**: Shortcut to instantly view the activity recorded for the current day.
+* **Log Viewer**: Displays technical details (time, file size, transfer time, and encryption time).
