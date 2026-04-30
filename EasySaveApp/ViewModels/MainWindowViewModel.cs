@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
@@ -16,6 +17,7 @@ namespace EasySaveApp.ViewModels
         private readonly JobManager _jobManager;
         private readonly BackupEngine _backupEngine;
         private readonly ConfigManager _configManager;
+        private int _validationMessageVersion;
 
         public ObservableCollection<BackupJob> Jobs { get; set; }
         public ObservableCollection<string> ActivityMessages { get; set; }
@@ -113,7 +115,30 @@ namespace EasySaveApp.ViewModels
         public string ValidationMessage
         {
             get => _validationMessage;
-            set => SetProperty(ref _validationMessage, value);
+            set
+            {
+                SetProperty(ref _validationMessage, value);
+                OnPropertyChanged(nameof(HasValidationMessage));
+            }
+        }
+
+        private string _validationMessageColor = "#1E425A";
+        public string ValidationMessageColor
+        {
+            get => _validationMessageColor;
+            set => SetProperty(ref _validationMessageColor, value);
+        }
+
+        private string _validationMessageBackground = "#EAF3F8";
+        public string ValidationMessageBackground
+        {
+            get => _validationMessageBackground;
+            set => SetProperty(ref _validationMessageBackground, value);
+        }
+
+        public bool HasValidationMessage
+        {
+            get => !string.IsNullOrWhiteSpace(ValidationMessage);
         }
 
         private string _runLogText = string.Empty;
@@ -121,6 +146,13 @@ namespace EasySaveApp.ViewModels
         {
             get => _runLogText;
             set => SetProperty(ref _runLogText, value);
+        }
+
+        private int _backupProgress;
+        public int BackupProgress
+        {
+            get => _backupProgress;
+            set => SetProperty(ref _backupProgress, value);
         }
 
         private string _logDate = DateTime.Now.ToString("yyyy-MM-dd");
@@ -380,12 +412,14 @@ namespace EasySaveApp.ViewModels
             {
                 BackupJob job = SelectedJob;
                 RunLogText = string.Empty;
+                BackupProgress = 0;
                 AddActivity($"Starting '{job.Name}' ({job.Type}).");
 
                 Task runTask = Task.Run(() => _backupEngine.ExecuteJob(job));
                 await RefreshRunLogsWhileRunning(runTask);
 
                 AddActivity($"Job '{job.Name}' executed.");
+                BackupProgress = 100;
                 SetValidation($"Job '{job.Name}' executed.");
             }
             finally
@@ -410,12 +444,14 @@ namespace EasySaveApp.ViewModels
                 foreach (BackupJob job in Jobs)
                 {
                     RunLogText = string.Empty;
+                    BackupProgress = 0;
                     AddActivity($"Starting '{job.Name}' ({job.Type}).");
 
                     Task runTask = Task.Run(() => _backupEngine.ExecuteJob(job));
                     await RefreshRunLogsWhileRunning(runTask);
 
                     AddActivity($"Job '{job.Name}' executed.");
+                    BackupProgress = 100;
                 }
 
                 SetValidation("All jobs executed.");
@@ -431,11 +467,61 @@ namespace EasySaveApp.ViewModels
             while (!runTask.IsCompleted)
             {
                 LoadRunLogsForDate(DateTime.Now.ToString("yyyy-MM-dd"));
+                LoadCurrentProgress();
                 await Task.Delay(500);
             }
 
             await runTask;
             LoadRunLogsForDate(DateTime.Now.ToString("yyyy-MM-dd"));
+            LoadCurrentProgress();
+        }
+
+        private void LoadCurrentProgress()
+        {
+            string statePath = GetStatePath();
+
+            if (!File.Exists(statePath))
+            {
+                return;
+            }
+
+            try
+            {
+                if (SelectedLogFormat == "Xml")
+                {
+                    string xml = File.ReadAllText(statePath);
+                    string startTag = "<Progression>";
+                    string endTag = "</Progression>";
+                    int startIndex = xml.IndexOf(startTag, StringComparison.OrdinalIgnoreCase);
+                    int endIndex = xml.IndexOf(endTag, StringComparison.OrdinalIgnoreCase);
+
+                    if (startIndex >= 0 && endIndex > startIndex)
+                    {
+                        startIndex += startTag.Length;
+                        string value = xml.Substring(startIndex, endIndex - startIndex);
+                        if (int.TryParse(value, out int progress))
+                        {
+                            BackupProgress = progress;
+                        }
+                    }
+
+                    return;
+                }
+
+                string json = File.ReadAllText(statePath);
+                using JsonDocument document = JsonDocument.Parse(json);
+
+                if (document.RootElement.ValueKind == JsonValueKind.Array &&
+                    document.RootElement.GetArrayLength() > 0 &&
+                    document.RootElement[0].TryGetProperty("Progression", out JsonElement progression))
+                {
+                    BackupProgress = progression.GetInt32();
+                }
+            }
+            catch
+            {
+                // The state file can be read while Logger is writing it.
+            }
         }
 
         private void DeleteSelectedJob()
@@ -572,6 +658,12 @@ namespace EasySaveApp.ViewModels
             return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", date + extension);
         }
 
+        private string GetStatePath()
+        {
+            string extension = SelectedLogFormat == "Xml" ? ".xml" : ".json";
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", "state" + extension);
+        }
+
         private void ClearForm()
         {
             JobName = string.Empty;
@@ -581,10 +673,39 @@ namespace EasySaveApp.ViewModels
             ValidationMessage = string.Empty;
         }
 
-        private void SetValidation(string message)
+        private async void SetValidation(string message)
         {
+            _validationMessageVersion++;
+            int currentVersion = _validationMessageVersion;
+
+            if (message.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+            {
+                ValidationMessageColor = "#B94A48";
+                ValidationMessageBackground = "#FBE9E7";
+            }
+            else if (message.Contains("success", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("executed", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("loaded", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("saved", StringComparison.OrdinalIgnoreCase))
+            {
+                ValidationMessageColor = "#2F7D4A";
+                ValidationMessageBackground = "#E7F4EA";
+            }
+            else
+            {
+                ValidationMessageColor = "#1E425A";
+                ValidationMessageBackground = "#EAF3F8";
+            }
+
             ValidationMessage = message;
             AddActivity(message);
+
+            await Task.Delay(10000);
+
+            if (currentVersion == _validationMessageVersion)
+            {
+                ValidationMessage = string.Empty;
+            }
         }
 
         private void AddActivity(string message)

@@ -30,7 +30,7 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,Auto,*">
         <Border Grid.Row="0" Background="#163B57" Padding="24,18">
             <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="EasySave" FontSize="30" FontWeight="Bold" Foreground="White"/>
@@ -54,10 +54,19 @@
             </Grid>
         </Border>
 
-        <TabControl Grid.Row="1" Margin="24">
+        <Border Grid.Row="1"
+                IsVisible="{Binding HasValidationMessage}"
+                Background="{Binding ValidationMessageBackground}"
+                BorderBrush="#B9D7E8"
+                BorderThickness="0,0,0,1"
+                Padding="24,12">
+            <TextBlock Text="{Binding ValidationMessage}" Foreground="{Binding ValidationMessageColor}" FontWeight="SemiBold"/>
+        </Border>
+
+        <TabControl Grid.Row="2" Margin="24">
             <TabItem Header="{Binding TabJobHeader}">
                 <Grid ColumnDefinitions="1.2*,0.95*" ColumnSpacing="20" Margin="0,16,0,0">
-                    <Grid Grid.Column="0" RowDefinitions="*,Auto,Auto" RowSpacing="20">
+                    <Grid Grid.Column="0" RowDefinitions="*,Auto" RowSpacing="20">
                         <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                             <Grid RowDefinitions="Auto,*,Auto">
                                 <Grid ColumnDefinitions="*,Auto">
@@ -105,27 +114,69 @@
                                     </ListBox.ItemTemplate>
                                 </ListBox>
 
-                                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
-                                    <Button Content="{Binding RunSelectedText}" Command="{Binding RunJobCommand}" IsEnabled="{Binding IsReady}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
-                                    <Button Content="{Binding RunAllText}" Command="{Binding RunAllJobsCommand}" IsEnabled="{Binding IsReady}" Background="#244F38" Foreground="White" Padding="18,10" CornerRadius="6"/>
-                                    <Button Content="{Binding DeleteSelectedText}" Command="{Binding DeleteJobCommand}" IsEnabled="{Binding HasSelectedJob}" Background="#B94A48" Foreground="White" Padding="18,10" CornerRadius="6"/>
-                                </StackPanel>
+                                <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="10">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button Content="{Binding RunSelectedText}" Command="{Binding RunJobCommand}" IsEnabled="{Binding IsReady}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                        <Button Content="{Binding RunAllText}" Command="{Binding RunAllJobsCommand}" IsEnabled="{Binding IsReady}" Background="#244F38" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                        <Button Content="{Binding DeleteSelectedText}" Command="{Binding DeleteJobCommand}" IsEnabled="{Binding HasSelectedJob}" Background="#B94A48" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                    </StackPanel>
+
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                        <ProgressBar Minimum="0" Maximum="100" Value="{Binding BackupProgress}" Height="14" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding BackupProgress, StringFormat='{}{0}%'}"
+                                                   Foreground="#245B7D"
+                                                   FontWeight="Bold"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Grid>
                             </Grid>
                         </Border>
 
                         <Border Grid.Row="1" Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                             <Grid RowDefinitions="Auto,*">
                                 <TextBlock Text="{Binding ActivityTitle}" FontSize="18" FontWeight="Bold" Foreground="#152C3F"/>
-                                <ListBox Grid.Row="1" ItemsSource="{Binding ActivityMessages}" Height="88" Margin="0,10,0,0" Background="#F7FAFD" BorderThickness="0"/>
+                                <ListBox Grid.Row="1" ItemsSource="{Binding ActivityMessages}" Height="230" Margin="0,10,0,0" Background="#F7FAFD" BorderThickness="0"/>
                             </Grid>
                         </Border>
+                    </Grid>
 
-                        <Border Grid.Row="2" Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
+                    <Grid Grid.Column="1" RowDefinitions="Auto,*" RowSpacing="20">
+                        <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{Binding CreateJobTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+
+                                <TextBlock Text="{Binding NameLabel}" Foreground="#52687A"/>
+                                <TextBox Text="{Binding JobName}" Watermark="Daily documents backup"/>
+
+                                <TextBlock Text="{Binding SourceLabel}" Foreground="#52687A"/>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox Grid.Column="0" Text="{Binding SourceDirectory}" Watermark="C:\SourceFolder"/>
+                                    <Button Grid.Column="1" Content="..." Width="35" Margin="8,0,0,0" Click="OnBrowseSourceClick" Background="#EAF3F8" Foreground="#152C3F" HorizontalContentAlignment="Center"/>
+                                </Grid>
+
+                                <TextBlock Text="{Binding TargetLabel}" Foreground="#52687A"/>
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                                    <TextBox Grid.Column="0" Text="{Binding TargetDirectory}" Watermark="D:\BackupFolder"/>
+                                    <Button Grid.Column="1" Content="..." Width="35" Margin="8,0,0,0" Click="OnBrowseTargetClick" Background="#EAF3F8" Foreground="#152C3F" HorizontalContentAlignment="Center"/>
+                                </Grid>
+
+                                <TextBlock Text="{Binding BackupTypeLabel}" Foreground="#52687A"/>
+                                <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding SelectedBackupType}" HorizontalAlignment="Stretch"/>
+
+                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
+                                    <Button Content="{Binding CreateText}" Command="{Binding CreateJobCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                    <Button Content="{Binding UpdateText}" Command="{Binding UpdateJobCommand}" IsEnabled="{Binding HasSelectedJob}" Background="#705C1D" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                    <Button Content="{Binding ClearText}" Command="{Binding ClearFormCommand}" Padding="18,10" CornerRadius="6"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="1" Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                             <Grid RowDefinitions="Auto,*">
                                 <TextBlock Text="{Binding RunLogsTitle}" FontSize="18" FontWeight="Bold" Foreground="#152C3F"/>
                                 <TextBox Grid.Row="1"
                                          Text="{Binding RunLogText}"
-                                         Height="120"
                                          Margin="0,10,0,0"
                                          IsReadOnly="True"
                                          AcceptsReturn="True"
@@ -135,46 +186,6 @@
                             </Grid>
                         </Border>
                     </Grid>
-
-                    <Border Grid.Column="1" Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
-                        <StackPanel Spacing="12">
-                            <TextBlock Text="{Binding CreateJobTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
-
-                            <TextBlock Text="{Binding NameLabel}" Foreground="#52687A"/>
-                            <TextBox Text="{Binding JobName}" Watermark="Daily documents backup"/>
-
-                            <TextBlock Text="{Binding SourceLabel}" Foreground="#52687A"/>
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBox Grid.Column="0" Text="{Binding SourceDirectory}" Watermark="C:\SourceFolder"/>
-                                    <Button Grid.Column="1" Content="..." Width="35" Margin="8,0,0,0" 
-                                            Click="OnBrowseSourceClick" 
-                                            Background="#EAF3F8" Foreground="#152C3F" 
-                                            HorizontalContentAlignment="Center"/>
-                                </Grid>
-
-                            <TextBlock Text="{Binding TargetLabel}" Foreground="#52687A"/>
-                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
-                                <TextBox Grid.Column="0" Text="{Binding TargetDirectory}" Watermark="D:\BackupFolder"/>
-                                <Button Grid.Column="1" Content="..." Width="35" Margin="8,0,0,0" 
-                                        Click="OnBrowseTargetClick" 
-                                        Background="#EAF3F8" Foreground="#152C3F" 
-                                        HorizontalContentAlignment="Center"/>
-                            </Grid>
-
-                            <TextBlock Text="{Binding BackupTypeLabel}" Foreground="#52687A"/>
-                            <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding SelectedBackupType}" HorizontalAlignment="Stretch"/>
-
-                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
-                                <Button Content="{Binding CreateText}" Command="{Binding CreateJobCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
-                                <Button Content="{Binding UpdateText}" Command="{Binding UpdateJobCommand}" IsEnabled="{Binding HasSelectedJob}" Background="#705C1D" Foreground="White" Padding="18,10" CornerRadius="6"/>
-                                <Button Content="{Binding ClearText}" Command="{Binding ClearFormCommand}" Padding="18,10" CornerRadius="6"/>
-                            </StackPanel>
-
-                            <Border Background="#EAF3F8" CornerRadius="6" Padding="12" Margin="0,8,0,0">
-                                <TextBlock Text="{Binding ValidationMessage}" Foreground="#1E425A" TextWrapping="Wrap"/>
-                            </Border>
-                        </StackPanel>
-                    </Border>
                 </Grid>
             </TabItem>
 
@@ -207,10 +218,7 @@
                             </StackPanel>
                         </Border>
 
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <Button Content="{Binding SaveSettingsText}" Command="{Binding SaveSettingsCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
-                            <TextBlock Text="{Binding ValidationMessage}" VerticalAlignment="Center" Foreground="#1E425A"/>
-                        </StackPanel>
+                        <Button Content="{Binding SaveSettingsText}" Command="{Binding SaveSettingsCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6" HorizontalAlignment="Left"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -223,7 +231,6 @@
                             <TextBox Text="{Binding LogDate}" Width="160" Watermark="yyyy-MM-dd"/>
                             <Button Content="{Binding LoadLogsText}" Command="{Binding LoadLogsCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
                             <Button Content="{Binding LoadTodayLogsText}" Command="{Binding LoadTodayLogsCommand}" Padding="18,10" CornerRadius="6"/>
-                            <TextBlock Text="{Binding ValidationMessage}" VerticalAlignment="Center" Foreground="#1E425A"/>
                         </StackPanel>
                     </Border>
 
