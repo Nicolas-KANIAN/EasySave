@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:EasySaveApp.ViewModels"
         xmlns:models="using:EasySave.Models"
+        xmlns:viewModels="using:EasySaveApp.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
@@ -83,27 +84,28 @@
 
                                 <ListBox Grid.Row="1"
                                          Classes="job-list"
-                                         ItemsSource="{Binding Jobs}"
-                                         SelectedItem="{Binding SelectedJob}"
+                                         ItemsSource="{Binding SelectableJobs}"
+                                         SelectedItem="{Binding SelectedSelectableJob}"
                                          Margin="0,18,0,18"
                                          Background="#F7FAFD"
                                          BorderBrush="#D8E1EA"
                                          BorderThickness="1"
                                          CornerRadius="6">
                                     <ListBox.ItemTemplate>
-                                        <DataTemplate x:DataType="models:BackupJob">
+                                        <DataTemplate x:DataType="viewModels:SelectableBackupJob">
                                             <Border Padding="12" MinHeight="84" Background="#F7FAFD">
-                                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
-                                                    <TextBlock Text="{Binding Name}" FontSize="17" FontWeight="Bold" Foreground="#152C3F"/>
-                                                    <Border Grid.Column="1" Background="#EAF3F8" CornerRadius="4" Padding="8,4">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto">
+                                                    <CheckBox IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="17" FontWeight="Bold" Foreground="#152C3F"/>
+                                                    <Border Grid.Column="2" Background="#EAF3F8" CornerRadius="4" Padding="8,4">
                                                         <TextBlock Text="{Binding Type}" Foreground="#245B7D" FontWeight="SemiBold"/>
                                                     </Border>
-                                                    <TextBlock Grid.Row="1"
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                                                                Text="{Binding SourceDirectory, StringFormat='Source: {0}'}"
                                                                Margin="0,8,0,0"
                                                                Foreground="#52687A"
                                                                TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Grid.Row="2"
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
                                                                Text="{Binding TargetDirectory, StringFormat='Target: {0}'}"
                                                                Margin="0,3,0,0"
                                                                Foreground="#52687A"
@@ -117,6 +119,7 @@
                                 <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="10">
                                     <StackPanel Orientation="Horizontal" Spacing="10">
                                         <Button Content="{Binding RunSelectedText}" Command="{Binding RunJobCommand}" IsEnabled="{Binding IsReady}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                        <Button Content="{Binding RunCheckedText}" Command="{Binding RunSelectedJobsCommand}" IsEnabled="{Binding IsReady}" Background="#245B7D" Foreground="White" Padding="18,10" CornerRadius="6"/>
                                         <Button Content="{Binding RunAllText}" Command="{Binding RunAllJobsCommand}" IsEnabled="{Binding IsReady}" Background="#244F38" Foreground="White" Padding="18,10" CornerRadius="6"/>
                                         <Button Content="{Binding DeleteSelectedText}" Command="{Binding DeleteJobCommand}" IsEnabled="{Binding HasSelectedJob}" Background="#B94A48" Foreground="White" Padding="18,10" CornerRadius="6"/>
                                     </StackPanel>

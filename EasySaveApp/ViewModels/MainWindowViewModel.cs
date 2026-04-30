@@ -18,8 +18,10 @@ namespace EasySaveApp.ViewModels
         private readonly BackupEngine _backupEngine;
         private readonly ConfigManager _configManager;
         private int _validationMessageVersion;
+        private string _runningJobName = string.Empty;
 
         public ObservableCollection<BackupJob> Jobs { get; set; }
+        public ObservableCollection<SelectableBackupJob> SelectableJobs { get; set; }
         public ObservableCollection<string> ActivityMessages { get; set; }
         public ObservableCollection<string> BackupTypes { get; set; }
         public ObservableCollection<string> LogFormats { get; set; }
@@ -122,6 +124,17 @@ namespace EasySaveApp.ViewModels
             }
         }
 
+        private SelectableBackupJob? _selectedSelectableJob;
+        public SelectableBackupJob? SelectedSelectableJob
+        {
+            get => _selectedSelectableJob;
+            set
+            {
+                SetProperty(ref _selectedSelectableJob, value);
+                SelectedJob = _selectedSelectableJob?.Job;
+            }
+        }
+
         private string _validationMessageColor = "#1E425A";
         public string ValidationMessageColor
         {
@@ -182,6 +195,7 @@ namespace EasySaveApp.ViewModels
         public ICommand CreateJobCommand { get; }
         public ICommand UpdateJobCommand { get; }
         public ICommand RunJobCommand { get; }
+        public ICommand RunSelectedJobsCommand { get; }
         public ICommand RunAllJobsCommand { get; }
         public ICommand DeleteJobCommand { get; }
         public ICommand SaveSettingsCommand { get; }
@@ -220,6 +234,7 @@ namespace EasySaveApp.ViewModels
         public string ActivityTitle => _isFrench ? "Activite" : "Activity";
         public string RunLogsTitle => _isFrench ? "Logs en temps reel" : "Real-time logs";
         public string RunSelectedText => _isFrench ? "Lancer selection" : "Run selected";
+        public string RunCheckedText => _isFrench ? "Lancer coches" : "Run checked";
         public string RunAllText => _isFrench ? "Tout lancer" : "Run all";
         public string DeleteSelectedText => _isFrench ? "Supprimer" : "Delete";
         public string CreateText => _isFrench ? "Creer" : "Create";
@@ -238,6 +253,12 @@ namespace EasySaveApp.ViewModels
             _backupEngine = new BackupEngine(_configManager.Config);
 
             Jobs = new ObservableCollection<BackupJob>(_jobManager.Jobs);
+            SelectableJobs = new ObservableCollection<SelectableBackupJob>();
+            foreach (BackupJob job in Jobs)
+            {
+                SelectableJobs.Add(new SelectableBackupJob(job));
+            }
+
             ActivityMessages = new ObservableCollection<string>();
 
             // Initialisation avec la traduction
@@ -254,6 +275,7 @@ namespace EasySaveApp.ViewModels
             CreateJobCommand = new RelayCommand(CreateJob);
             UpdateJobCommand = new RelayCommand(UpdateJob);
             RunJobCommand = new AsyncRelayCommand(RunSelectedJob);
+            RunSelectedJobsCommand = new AsyncRelayCommand(RunCheckedJobs);
             RunAllJobsCommand = new AsyncRelayCommand(RunAllJobs);
             DeleteJobCommand = new RelayCommand(DeleteSelectedJob);
             SaveSettingsCommand = new RelayCommand(SaveSettings);
@@ -307,6 +329,7 @@ namespace EasySaveApp.ViewModels
             OnPropertyChanged(nameof(ActivityTitle));
             OnPropertyChanged(nameof(RunLogsTitle));
             OnPropertyChanged(nameof(RunSelectedText));
+            OnPropertyChanged(nameof(RunCheckedText));
             OnPropertyChanged(nameof(RunAllText));
             OnPropertyChanged(nameof(DeleteSelectedText));
             OnPropertyChanged(nameof(CreateText));
@@ -342,6 +365,7 @@ namespace EasySaveApp.ViewModels
 
             _jobManager.CreateJob(newJob);
             Jobs.Add(newJob);
+            SelectableJobs.Add(new SelectableBackupJob(newJob));
 
             SelectedJob = newJob;
             ClearForm();
@@ -381,6 +405,7 @@ namespace EasySaveApp.ViewModels
 
             _jobManager.UpdateJob(index, updatedJob);
             Jobs[index] = updatedJob;
+            SelectableJobs[index] = new SelectableBackupJob(updatedJob);
             SelectedJob = updatedJob;
 
             SetValidation($"Job '{updatedJobName}' updated successfully.");
@@ -411,6 +436,7 @@ namespace EasySaveApp.ViewModels
             try
             {
                 BackupJob job = SelectedJob;
+                _runningJobName = job.Name;
                 RunLogText = string.Empty;
                 BackupProgress = 0;
                 AddActivity($"Starting '{job.Name}' ({job.Type}).");
@@ -421,9 +447,11 @@ namespace EasySaveApp.ViewModels
                 AddActivity($"Job '{job.Name}' executed.");
                 BackupProgress = 100;
                 SetValidation($"Job '{job.Name}' executed.");
+                _runningJobName = string.Empty;
             }
             finally
             {
+                _runningJobName = string.Empty;
                 IsBusy = false;
             }
         }
@@ -443,6 +471,7 @@ namespace EasySaveApp.ViewModels
 
                 foreach (BackupJob job in Jobs)
                 {
+                    _runningJobName = job.Name;
                     RunLogText = string.Empty;
                     BackupProgress = 0;
                     AddActivity($"Starting '{job.Name}' ({job.Type}).");
@@ -455,9 +484,11 @@ namespace EasySaveApp.ViewModels
                 }
 
                 SetValidation("All jobs executed.");
+                _runningJobName = string.Empty;
             }
             finally
             {
+                _runningJobName = string.Empty;
                 IsBusy = false;
             }
         }
@@ -468,7 +499,13 @@ namespace EasySaveApp.ViewModels
             {
                 LoadRunLogsForDate(DateTime.Now.ToString("yyyy-MM-dd"));
                 LoadCurrentProgress();
-                await Task.Delay(500);
+
+                if (BackupProgress < 95)
+                {
+                    BackupProgress++;
+                }
+
+                await Task.Delay(100);
             }
 
             await runTask;
@@ -476,8 +513,59 @@ namespace EasySaveApp.ViewModels
             LoadCurrentProgress();
         }
 
+        private async Task RunCheckedJobs()
+        {
+            List<BackupJob> checkedJobs = new List<BackupJob>();
+
+            foreach (SelectableBackupJob selectableJob in SelectableJobs)
+            {
+                if (selectableJob.IsSelected)
+                {
+                    checkedJobs.Add(selectableJob.Job);
+                }
+            }
+
+            if (checkedJobs.Count == 0)
+            {
+                SetValidation("Error: select at least one checked job.");
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                AddActivity("Sequential execution started for checked jobs.");
+
+                foreach (BackupJob job in checkedJobs)
+                {
+                    _runningJobName = job.Name;
+                    RunLogText = string.Empty;
+                    BackupProgress = 0;
+                    AddActivity($"Starting '{job.Name}' ({job.Type}).");
+
+                    Task runTask = Task.Run(() => _backupEngine.ExecuteJob(job));
+                    await RefreshRunLogsWhileRunning(runTask);
+
+                    AddActivity($"Job '{job.Name}' executed.");
+                    BackupProgress = 100;
+                }
+
+                SetValidation("Checked jobs executed.");
+            }
+            finally
+            {
+                _runningJobName = string.Empty;
+                IsBusy = false;
+            }
+        }
+
         private void LoadCurrentProgress()
         {
+            if (string.IsNullOrWhiteSpace(_runningJobName))
+            {
+                return;
+            }
+
             string statePath = GetStatePath();
 
             if (!File.Exists(statePath))
@@ -497,6 +585,16 @@ namespace EasySaveApp.ViewModels
 
                     if (startIndex >= 0 && endIndex > startIndex)
                     {
+                        if (!xml.Contains("<Name>" + _runningJobName + "</Name>", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return;
+                        }
+
+                        if (!xml.Contains("<State>ACTIVE</State>", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return;
+                        }
+
                         startIndex += startTag.Length;
                         string value = xml.Substring(startIndex, endIndex - startIndex);
                         if (int.TryParse(value, out int progress))
@@ -513,9 +611,18 @@ namespace EasySaveApp.ViewModels
 
                 if (document.RootElement.ValueKind == JsonValueKind.Array &&
                     document.RootElement.GetArrayLength() > 0 &&
+                    document.RootElement[0].TryGetProperty("Name", out JsonElement name) &&
+                    document.RootElement[0].TryGetProperty("State", out JsonElement state) &&
                     document.RootElement[0].TryGetProperty("Progression", out JsonElement progression))
                 {
-                    BackupProgress = progression.GetInt32();
+                    string? stateJobName = name.GetString();
+                    string? stateValue = state.GetString();
+
+                    if (string.Equals(stateJobName, _runningJobName, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(stateValue, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+                    {
+                        BackupProgress = progression.GetInt32();
+                    }
                 }
             }
             catch
@@ -543,6 +650,7 @@ namespace EasySaveApp.ViewModels
 
             _jobManager.DeleteJob(index);
             Jobs.RemoveAt(index);
+            SelectableJobs.RemoveAt(index);
 
             SelectedJob = null;
             ClearForm();
@@ -716,6 +824,29 @@ namespace EasySaveApp.ViewModels
             {
                 ActivityMessages.RemoveAt(ActivityMessages.Count - 1);
             }
+        }
+    }
+
+    public class SelectableBackupJob : ViewModelBase
+    {
+        private bool _isSelected;
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set => SetProperty(ref _isSelected, value);
+        }
+
+        public BackupJob Job { get; set; }
+
+        public string Name => Job.Name;
+        public string SourceDirectory => Job.SourceDirectory;
+        public string TargetDirectory => Job.TargetDirectory;
+        public BackupType Type => Job.Type;
+
+        public SelectableBackupJob(BackupJob job)
+        {
+            Job = job;
         }
     }
 }
