@@ -17,6 +17,15 @@
         Height="760"
         Background="#F4F7FB">
 
+    <Window.Styles>
+        <Style Selector="ListBox.job-list ListBoxItem:pointerover">
+            <Setter Property="Background" Value="#EAF3F8"/>
+        </Style>
+        <Style Selector="ListBox.job-list ListBoxItem:selected">
+            <Setter Property="Background" Value="#DCECF5"/>
+        </Style>
+    </Window.Styles>
+
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
@@ -25,24 +34,15 @@
         <Border Grid.Row="0" Background="#163B57" Padding="24,18">
             <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="EasySave" FontSize="30" FontWeight="Bold" Foreground="White"/>
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
-                            Spacing="8"
-                            VerticalAlignment="Center">
-                    <Button Command="{Binding SetFrenchCommand}"
-                            Padding="8,6"
-                            Background="#245B7D"
-                            CornerRadius="6">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Command="{Binding SetFrenchCommand}" Padding="8,6" Background="#245B7D" CornerRadius="6">
                         <Grid Width="30" Height="20" ColumnDefinitions="*,*,*">
                             <Border Grid.Column="0" Background="#0055A4"/>
                             <Border Grid.Column="1" Background="White"/>
                             <Border Grid.Column="2" Background="#EF4135"/>
                         </Grid>
                     </Button>
-                    <Button Command="{Binding SetEnglishCommand}"
-                            Padding="8,6"
-                            Background="#245B7D"
-                            CornerRadius="6">
+                    <Button Command="{Binding SetEnglishCommand}" Padding="8,6" Background="#245B7D" CornerRadius="6">
                         <Grid Width="30" Height="20" Background="#012169">
                             <Path Fill="White" Data="M 0,0 L 5,0 L 30,16 L 30,20 L 25,20 L 0,4 Z M 30,0 L 25,0 L 0,16 L 0,20 L 5,20 L 30,4 Z"/>
                             <Path Fill="#C8102E" Data="M 0,0 L 3,0 L 30,17 L 30,20 L 27,20 L 0,3 Z M 30,0 L 27,0 L 0,17 L 0,20 L 3,20 L 30,3 Z"/>
@@ -54,125 +54,89 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="1"
-              ColumnDefinitions="1.25*,0.95*"
-              RowDefinitions="*"
-              Margin="24"
-              ColumnSpacing="20">
+        <TabControl Grid.Row="1" Margin="24">
+            <TabItem Header="Job">
+                <Grid ColumnDefinitions="1.2*,0.95*" ColumnSpacing="20" Margin="0,16,0,0">
+                    <Grid Grid.Column="0" RowDefinitions="*,Auto,Auto" RowSpacing="20">
+                        <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
+                            <Grid RowDefinitions="Auto,*,Auto">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{Binding JobsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                                        <TextBlock Text="{Binding JobsSubtitle}" Foreground="#66798A"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Jobs.Count, StringFormat='{}{0} jobs'}"
+                                               Foreground="#245B7D"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
 
-            <Grid Grid.Row="0"
-                  Grid.Column="0"
-                  RowDefinitions="*,Auto"
-                  RowSpacing="20"
-                  MinWidth="0">
-                <Border Background="White"
-                        BorderBrush="#D8E1EA"
-                        BorderThickness="1"
-                        CornerRadius="8"
-                        Padding="18">
-                    <Grid RowDefinitions="Auto,*,Auto">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding JobsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
-                                <TextBlock Text="{Binding JobsSubtitle}" Foreground="#66798A"/>
-                            </StackPanel>
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding Jobs.Count, StringFormat='{}{0} jobs'}"
-                                       Foreground="#245B7D"
-                                       FontWeight="Bold"
-                                       VerticalAlignment="Center"/>
-                        </Grid>
-
-                        <ListBox Grid.Row="1"
-                                 ItemsSource="{Binding Jobs}"
-                                 SelectedItem="{Binding SelectedJob}"
-                                 Margin="0,18,0,18"
-                                 Background="#F7FAFD"
-                                 BorderBrush="#D8E1EA"
-                                 BorderThickness="1"
-                                 CornerRadius="6">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate x:DataType="models:BackupJob">
-                                    <Border Padding="12" MinHeight="84">
-                                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
-                                            <TextBlock Text="{Binding Name}"
-                                                       FontSize="17"
-                                                       FontWeight="Bold"
-                                                       Foreground="#152C3F"/>
-                                            <Border Grid.Column="1"
-                                                    Background="#EAF3F8"
-                                                    CornerRadius="4"
-                                                    Padding="8,4">
-                                                <TextBlock Text="{Binding Type}" Foreground="#245B7D" FontWeight="SemiBold"/>
+                                <ListBox Grid.Row="1"
+                                         Classes="job-list"
+                                         ItemsSource="{Binding Jobs}"
+                                         SelectedItem="{Binding SelectedJob}"
+                                         Margin="0,18,0,18"
+                                         Background="#F7FAFD"
+                                         BorderBrush="#D8E1EA"
+                                         BorderThickness="1"
+                                         CornerRadius="6">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="models:BackupJob">
+                                            <Border Padding="12" MinHeight="84" Background="#F7FAFD">
+                                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+                                                    <TextBlock Text="{Binding Name}" FontSize="17" FontWeight="Bold" Foreground="#152C3F"/>
+                                                    <Border Grid.Column="1" Background="#EAF3F8" CornerRadius="4" Padding="8,4">
+                                                        <TextBlock Text="{Binding Type}" Foreground="#245B7D" FontWeight="SemiBold"/>
+                                                    </Border>
+                                                    <TextBlock Grid.Row="1"
+                                                               Text="{Binding SourceDirectory, StringFormat='Source: {0}'}"
+                                                               Margin="0,8,0,0"
+                                                               Foreground="#52687A"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Row="2"
+                                                               Text="{Binding TargetDirectory, StringFormat='Target: {0}'}"
+                                                               Margin="0,3,0,0"
+                                                               Foreground="#52687A"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                </Grid>
                                             </Border>
-                                            <TextBlock Grid.Row="1"
-                                                       Text="{Binding SourceDirectory, StringFormat='Source: {0}'}"
-                                                       Margin="0,8,0,0"
-                                                       Foreground="#52687A"
-                                                       TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Grid.Row="2"
-                                                       Text="{Binding TargetDirectory, StringFormat='Target: {0}'}"
-                                                       Margin="0,3,0,0"
-                                                       Foreground="#52687A"
-                                                       TextTrimming="CharacterEllipsis"/>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
 
-                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
-                            <Button Content="{Binding RunSelectedText}"
-                                    Command="{Binding RunJobCommand}"
-                                    IsEnabled="{Binding IsReady}"
-                                    Background="#1F6F9F"
-                                    Foreground="White"
-                                    Padding="18,10"
-                                    CornerRadius="6"/>
-                            <Button Content="{Binding RunAllText}"
-                                    Command="{Binding RunAllJobsCommand}"
-                                    IsEnabled="{Binding IsReady}"
-                                    Background="#244F38"
-                                    Foreground="White"
-                                    Padding="18,10"
-                                    CornerRadius="6"/>
-                            <Button Content="{Binding DeleteSelectedText}"
-                                    Command="{Binding DeleteJobCommand}"
-                                    IsEnabled="{Binding HasSelectedJob}"
-                                    Background="#B94A48"
-                                    Foreground="White"
-                                    Padding="18,10"
-                                    CornerRadius="6"/>
-                        </StackPanel>
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
+                                    <Button Content="{Binding RunSelectedText}" Command="{Binding RunJobCommand}" IsEnabled="{Binding IsReady}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                    <Button Content="{Binding RunAllText}" Command="{Binding RunAllJobsCommand}" IsEnabled="{Binding IsReady}" Background="#244F38" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                    <Button Content="{Binding DeleteSelectedText}" Command="{Binding DeleteJobCommand}" IsEnabled="{Binding HasSelectedJob}" Background="#B94A48" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="1" Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
+                            <Grid RowDefinitions="Auto,*">
+                                <TextBlock Text="{Binding ActivityTitle}" FontSize="18" FontWeight="Bold" Foreground="#152C3F"/>
+                                <ListBox Grid.Row="1" ItemsSource="{Binding ActivityMessages}" Height="88" Margin="0,10,0,0" Background="#F7FAFD" BorderThickness="0"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="2" Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
+                            <Grid RowDefinitions="Auto,*">
+                                <TextBlock Text="{Binding RunLogsTitle}" FontSize="18" FontWeight="Bold" Foreground="#152C3F"/>
+                                <TextBox Grid.Row="1"
+                                         Text="{Binding RunLogText}"
+                                         Height="120"
+                                         Margin="0,10,0,0"
+                                         IsReadOnly="True"
+                                         AcceptsReturn="True"
+                                         TextWrapping="NoWrap"
+                                         FontFamily="Consolas"
+                                         Background="#F7FAFD"/>
+                            </Grid>
+                        </Border>
                     </Grid>
-                </Border>
 
-                <Border Grid.Row="1"
-                        Background="White"
-                        BorderBrush="#D8E1EA"
-                        BorderThickness="1"
-                        CornerRadius="8"
-                        Padding="18">
-                    <Grid RowDefinitions="Auto,*">
-                        <TextBlock Text="{Binding ActivityTitle}" FontSize="18" FontWeight="Bold" Foreground="#152C3F"/>
-                        <ListBox Grid.Row="1"
-                                 ItemsSource="{Binding ActivityMessages}"
-                                 Height="90"
-                                 Margin="0,10,0,0"
-                                 Background="#F7FAFD"
-                                 BorderThickness="0"
-                                 HorizontalAlignment="Stretch"/>
-                    </Grid>
-                </Border>
-            </Grid>
-
-            <ScrollViewer Grid.Row="0" Grid.Column="1">
-                <StackPanel Spacing="20">
-                    <Border Background="White"
-                            BorderBrush="#D8E1EA"
-                            BorderThickness="1"
-                            CornerRadius="8"
-                            Padding="18">
+                    <Border Grid.Column="1" Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                         <StackPanel Spacing="12">
                             <TextBlock Text="{Binding CreateJobTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
 
@@ -186,58 +150,81 @@
                             <TextBox Text="{Binding TargetDirectory}" Watermark="D:\BackupFolder"/>
 
                             <TextBlock Text="{Binding BackupTypeLabel}" Foreground="#52687A"/>
-                            <ComboBox ItemsSource="{Binding BackupTypes}"
-                                      SelectedItem="{Binding SelectedBackupType}"
-                                      HorizontalAlignment="Stretch"/>
+                            <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding SelectedBackupType}" HorizontalAlignment="Stretch"/>
 
                             <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
-                                <Button Content="{Binding CreateText}"
-                                        Command="{Binding CreateJobCommand}"
-                                        Background="#1F6F9F"
-                                        Foreground="White"
-                                        Padding="18,10"
-                                        CornerRadius="6"/>
-                                <Button Content="{Binding ClearText}"
-                                        Command="{Binding ClearFormCommand}"
-                                        Padding="18,10"
-                                        CornerRadius="6"/>
+                                <Button Content="{Binding CreateText}" Command="{Binding CreateJobCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                <Button Content="{Binding UpdateText}" Command="{Binding UpdateJobCommand}" IsEnabled="{Binding HasSelectedJob}" Background="#705C1D" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                <Button Content="{Binding ClearText}" Command="{Binding ClearFormCommand}" Padding="18,10" CornerRadius="6"/>
                             </StackPanel>
+
+                            <Border Background="#EAF3F8" CornerRadius="6" Padding="12" Margin="0,8,0,0">
+                                <TextBlock Text="{Binding ValidationMessage}" Foreground="#1E425A" TextWrapping="Wrap"/>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Parametres">
+                <ScrollViewer Margin="0,16,0,0">
+                    <StackPanel Spacing="20">
+                        <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{Binding LogSettingsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                                <TextBlock Text="{Binding LogFormatLabel}" Foreground="#52687A"/>
+                                <ComboBox ItemsSource="{Binding LogFormats}" SelectedItem="{Binding SelectedLogFormat}" Width="260" HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{Binding EncryptionSettingsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                                <TextBlock Text="{Binding ExtensionsLabel}" Foreground="#52687A"/>
+                                <TextBox Text="{Binding ExtensionsToEncrypt}" Watermark=".txt; .pdf; .docx"/>
+                                <TextBlock Text="{Binding CryptoKeyLabel}" Foreground="#52687A"/>
+                                <TextBox Text="{Binding CryptoKey}" Watermark="EasySave2026"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{Binding BusinessSoftwareSettingsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                                <TextBlock Text="{Binding BusinessSoftwareLabel}" Foreground="#52687A"/>
+                                <TextBox Text="{Binding BusinessSoftware}" Watermark="calculator.exe"/>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button Content="{Binding SaveSettingsText}" Command="{Binding SaveSettingsCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                            <TextBlock Text="{Binding ValidationMessage}" VerticalAlignment="Center" Foreground="#1E425A"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Logs">
+                <Grid RowDefinitions="Auto,*" RowSpacing="16" Margin="0,16,0,0">
+                    <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="Date" VerticalAlignment="Center" Foreground="#52687A"/>
+                            <TextBox Text="{Binding LogDate}" Width="160" Watermark="yyyy-MM-dd"/>
+                            <Button Content="{Binding LoadLogsText}" Command="{Binding LoadLogsCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                            <Button Content="{Binding LoadTodayLogsText}" Command="{Binding LoadTodayLogsCommand}" Padding="18,10" CornerRadius="6"/>
+                            <TextBlock Text="{Binding ValidationMessage}" VerticalAlignment="Center" Foreground="#1E425A"/>
                         </StackPanel>
                     </Border>
 
-                    <Border Background="White"
-                            BorderBrush="#D8E1EA"
-                            BorderThickness="1"
-                            CornerRadius="8"
-                            Padding="18">
-                        <StackPanel Spacing="12">
-                            <TextBlock Text="{Binding SettingsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
-
-                            <TextBlock Text="{Binding LogFormatLabel}" Foreground="#52687A"/>
-                            <ComboBox ItemsSource="{Binding LogFormats}"
-                                      SelectedItem="{Binding SelectedLogFormat}"
-                                      HorizontalAlignment="Stretch"/>
-
-                            <TextBlock Text="{Binding BusinessSoftwareLabel}" Foreground="#52687A"/>
-                            <TextBox Text="{Binding BusinessSoftware}" Watermark="calculator.exe"/>
-
-                            <TextBlock Text="{Binding ExtensionsLabel}" Foreground="#52687A"/>
-                            <TextBox Text="{Binding ExtensionsToEncrypt}" Watermark=".txt; .pdf; .docx"/>
-
-                            <TextBlock Text="{Binding CryptoKeyLabel}" Foreground="#52687A"/>
-                            <TextBox Text="{Binding CryptoKey}" Watermark="EasySave2026"/>
-
-                            <Button Content="{Binding SaveSettingsText}"
-                                    Command="{Binding SaveSettingsCommand}"
-                                    Background="#1F6F9F"
-                                    Foreground="White"
-                                    Padding="18,10"
-                                    CornerRadius="6"
-                                    HorizontalAlignment="Left"/>
-                        </StackPanel>
+                    <Border Grid.Row="1" Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
+                        <TextBox Text="{Binding LoadedLogText}"
+                                 IsReadOnly="True"
+                                 AcceptsReturn="True"
+                                 TextWrapping="NoWrap"
+                                 FontFamily="Consolas"
+                                 Background="#F7FAFD"/>
                     </Border>
-                </StackPanel>
-            </ScrollViewer>
-        </Grid>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>

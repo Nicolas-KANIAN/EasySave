@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
@@ -30,7 +31,6 @@ namespace EasySaveApp.ViewModels
                 SetProperty(ref _selectedJob, value);
                 OnPropertyChanged(nameof(HasSelectedJob));
 
-                // Préremplissage du formulaire lorsqu'un travail est sélectionné
                 if (_selectedJob != null)
                 {
                     JobName = _selectedJob.Name;
@@ -108,11 +108,32 @@ namespace EasySaveApp.ViewModels
             }
         }
 
-        private string _statusMessage = "Ready.";
-        public string StatusMessage
+        private string _validationMessage = string.Empty;
+        public string ValidationMessage
         {
-            get => _statusMessage;
-            set => SetProperty(ref _statusMessage, value);
+            get => _validationMessage;
+            set => SetProperty(ref _validationMessage, value);
+        }
+
+        private string _runLogText = string.Empty;
+        public string RunLogText
+        {
+            get => _runLogText;
+            set => SetProperty(ref _runLogText, value);
+        }
+
+        private string _logDate = DateTime.Now.ToString("yyyy-MM-dd");
+        public string LogDate
+        {
+            get => _logDate;
+            set => SetProperty(ref _logDate, value);
+        }
+
+        private string _loadedLogText = string.Empty;
+        public string LoadedLogText
+        {
+            get => _loadedLogText;
+            set => SetProperty(ref _loadedLogText, value);
         }
 
         public bool HasSelectedJob
@@ -126,39 +147,46 @@ namespace EasySaveApp.ViewModels
         }
 
         public ICommand CreateJobCommand { get; }
-        public ICommand UpdateJobCommand { get; } // Ajout de la commande
+        public ICommand UpdateJobCommand { get; }
         public ICommand RunJobCommand { get; }
         public ICommand RunAllJobsCommand { get; }
         public ICommand DeleteJobCommand { get; }
         public ICommand SaveSettingsCommand { get; }
         public ICommand ClearFormCommand { get; }
+        public ICommand LoadLogsCommand { get; }
+        public ICommand LoadTodayLogsCommand { get; }
         public ICommand SetEnglishCommand { get; }
         public ICommand SetFrenchCommand { get; }
 
         private bool _isFrench;
 
-        public string HeaderSubtitle => _isFrench ? "Console de gestion des sauvegardes" : "Backup management console";
         public string JobsTitle => _isFrench ? "Travaux de sauvegarde" : "Backup jobs";
-        public string JobsSubtitle => _isFrench ? "Créer, sélectionner, supprimer et lancer les travaux." : "Create, select, delete and run jobs.";
-        public string CreateJobTitle => _isFrench ? "Créer un travail" : "Create a job";
+        public string JobsSubtitle => _isFrench ? "Creer, modifier, supprimer et lancer les travaux." : "Create, update, delete and run jobs.";
+        public string CreateJobTitle => _isFrench ? "Travail" : "Job";
         public string NameLabel => _isFrench ? "Nom" : "Name";
-        public string SourceLabel => _isFrench ? "Répertoire source" : "Source directory";
-        public string TargetLabel => _isFrench ? "Répertoire cible" : "Target directory";
+        public string SourceLabel => _isFrench ? "Repertoire source" : "Source directory";
+        public string TargetLabel => _isFrench ? "Repertoire cible" : "Target directory";
         public string BackupTypeLabel => _isFrench ? "Type de sauvegarde" : "Backup type";
-        public string SettingsTitle => _isFrench ? "Paramètres" : "Settings";
+        public string SettingsTitle => _isFrench ? "Parametres" : "Settings";
+        public string LogsTitle => "Logs";
+        public string LogSettingsTitle => _isFrench ? "Logs" : "Logs";
+        public string EncryptionSettingsTitle => _isFrench ? "Cryptage" : "Encryption";
+        public string BusinessSoftwareSettingsTitle => _isFrench ? "Logiciel metier" : "Business software";
         public string LogFormatLabel => _isFrench ? "Format des logs" : "Log format";
-        public string BusinessSoftwareLabel => _isFrench ? "Logiciel métier" : "Business software process";
-        public string ExtensionsLabel => _isFrench ? "Extensions à chiffrer" : "Extensions to encrypt";
-        public string CryptoKeyLabel => _isFrench ? "Clé CryptoSoft" : "Crypto key";
-        public string ActivityTitle => _isFrench ? "Activité" : "Activity";
-        public string RunSelectedText => _isFrench ? "Lancer sélection" : "Run selected";
+        public string BusinessSoftwareLabel => _isFrench ? "Processus logiciel metier" : "Business software process";
+        public string ExtensionsLabel => _isFrench ? "Extensions a chiffrer" : "Extensions to encrypt";
+        public string CryptoKeyLabel => _isFrench ? "Cle CryptoSoft" : "Crypto key";
+        public string ActivityTitle => _isFrench ? "Activite" : "Activity";
+        public string RunLogsTitle => _isFrench ? "Logs en temps reel" : "Real-time logs";
+        public string RunSelectedText => _isFrench ? "Lancer selection" : "Run selected";
         public string RunAllText => _isFrench ? "Tout lancer" : "Run all";
-        public string DeleteSelectedText => _isFrench ? "Supprimer sélection" : "Delete selected";
-        public string CreateText => _isFrench ? "Créer" : "Create";
-        public string UpdateText => _isFrench ? "Modifier" : "Update"; // Ajout du texte pour le bouton
+        public string DeleteSelectedText => _isFrench ? "Supprimer" : "Delete";
+        public string CreateText => _isFrench ? "Creer" : "Create";
+        public string UpdateText => _isFrench ? "Modifier" : "Update";
         public string ClearText => _isFrench ? "Effacer" : "Clear";
-        public string SaveSettingsText => _isFrench ? "Sauvegarder" : "Save settings";
-        public string FooterText => _isFrench ? "Fonctions reprises de la console : créer, lister, lancer, supprimer, configurer logs et chiffrement." : "Features mirrored from console: create, list, run, delete, configure logs and encryption.";
+        public string SaveSettingsText => _isFrench ? "Enregistrer" : "Save";
+        public string LoadLogsText => _isFrench ? "Ouvrir les logs" : "Open logs";
+        public string LoadTodayLogsText => _isFrench ? "Logs du jour" : "Today logs";
 
         public MainWindowViewModel()
         {
@@ -179,12 +207,14 @@ namespace EasySaveApp.ViewModels
             CryptoKey = _configManager.Config.CryptoKey;
 
             CreateJobCommand = new RelayCommand(CreateJob);
-            UpdateJobCommand = new RelayCommand(UpdateJob); // Initialisation de la commande
+            UpdateJobCommand = new RelayCommand(UpdateJob);
             RunJobCommand = new AsyncRelayCommand(RunSelectedJob);
             RunAllJobsCommand = new AsyncRelayCommand(RunAllJobs);
             DeleteJobCommand = new RelayCommand(DeleteSelectedJob);
             SaveSettingsCommand = new RelayCommand(SaveSettings);
             ClearFormCommand = new RelayCommand(ClearForm);
+            LoadLogsCommand = new RelayCommand(LoadLogsForSelectedDate);
+            LoadTodayLogsCommand = new RelayCommand(LoadTodayLogs);
             SetEnglishCommand = new RelayCommand(SetEnglish);
             SetFrenchCommand = new RelayCommand(SetFrench);
 
@@ -195,19 +225,18 @@ namespace EasySaveApp.ViewModels
         {
             _isFrench = false;
             RefreshLanguage();
-            SetStatus("Language changed to English.");
+            SetValidation("Language changed to English.");
         }
 
         private void SetFrench()
         {
             _isFrench = true;
             RefreshLanguage();
-            SetStatus("Langue changée en français.");
+            SetValidation("Langue changee en francais.");
         }
 
         private void RefreshLanguage()
         {
-            OnPropertyChanged(nameof(HeaderSubtitle));
             OnPropertyChanged(nameof(JobsTitle));
             OnPropertyChanged(nameof(JobsSubtitle));
             OnPropertyChanged(nameof(CreateJobTitle));
@@ -216,28 +245,31 @@ namespace EasySaveApp.ViewModels
             OnPropertyChanged(nameof(TargetLabel));
             OnPropertyChanged(nameof(BackupTypeLabel));
             OnPropertyChanged(nameof(SettingsTitle));
+            OnPropertyChanged(nameof(LogsTitle));
+            OnPropertyChanged(nameof(LogSettingsTitle));
+            OnPropertyChanged(nameof(EncryptionSettingsTitle));
+            OnPropertyChanged(nameof(BusinessSoftwareSettingsTitle));
             OnPropertyChanged(nameof(LogFormatLabel));
             OnPropertyChanged(nameof(BusinessSoftwareLabel));
             OnPropertyChanged(nameof(ExtensionsLabel));
             OnPropertyChanged(nameof(CryptoKeyLabel));
             OnPropertyChanged(nameof(ActivityTitle));
+            OnPropertyChanged(nameof(RunLogsTitle));
             OnPropertyChanged(nameof(RunSelectedText));
             OnPropertyChanged(nameof(RunAllText));
             OnPropertyChanged(nameof(DeleteSelectedText));
             OnPropertyChanged(nameof(CreateText));
-            OnPropertyChanged(nameof(UpdateText)); // Rafraîchissement du texte
+            OnPropertyChanged(nameof(UpdateText));
             OnPropertyChanged(nameof(ClearText));
             OnPropertyChanged(nameof(SaveSettingsText));
-            OnPropertyChanged(nameof(FooterText));
+            OnPropertyChanged(nameof(LoadLogsText));
+            OnPropertyChanged(nameof(LoadTodayLogsText));
         }
 
         private void CreateJob()
         {
-            if (string.IsNullOrWhiteSpace(JobName) ||
-                string.IsNullOrWhiteSpace(SourceDirectory) ||
-                string.IsNullOrWhiteSpace(TargetDirectory))
+            if (!ValidateJobForm())
             {
-                SetStatus("Name, source and target are required.");
                 return;
             }
 
@@ -253,47 +285,62 @@ namespace EasySaveApp.ViewModels
 
             SelectedJob = newJob;
             ClearForm();
-            SetStatus($"Job '{newJob.Name}' created.");
+            SetValidation($"Job '{newJob.Name}' created successfully.");
         }
 
-        // Ajout de la méthode UpdateJob
         private void UpdateJob()
         {
-            if (SelectedJob == null) return;
-
-            if (string.IsNullOrWhiteSpace(JobName) ||
-                string.IsNullOrWhiteSpace(SourceDirectory) ||
-                string.IsNullOrWhiteSpace(TargetDirectory))
+            if (SelectedJob == null)
             {
-                SetStatus("Name, source and target are required.");
+                SetValidation("Error: select a job before updating it.");
+                return;
+            }
+
+            if (!ValidateJobForm())
+            {
                 return;
             }
 
             string updatedJobName = JobName.Trim();
-
-            SelectedJob.Name = updatedJobName;
-            SelectedJob.SourceDirectory = SourceDirectory.Trim().Trim('"');
-            SelectedJob.TargetDirectory = TargetDirectory.Trim().Trim('"');
-            SelectedJob.Type = SelectedBackupType == "Full" ? BackupType.Full : BackupType.Differential;
-
             int index = Jobs.IndexOf(SelectedJob);
-            if (index != -1)
+
+            if (index < 0)
             {
-                _jobManager.UpdateJob(index, SelectedJob);
-                Jobs[index] = SelectedJob;
+                SetValidation("Error: selected job was not found.");
+                return;
             }
 
-            SetStatus($"Job '{updatedJobName}' updated.");
-            ClearForm();
+            BackupJob updatedJob = new BackupJob(
+                updatedJobName,
+                SourceDirectory.Trim().Trim('"'),
+                TargetDirectory.Trim().Trim('"'),
+                SelectedBackupType == "Full" ? BackupType.Full : BackupType.Differential);
 
-            SelectedJob = null;
+            _jobManager.UpdateJob(index, updatedJob);
+            Jobs[index] = updatedJob;
+            SelectedJob = updatedJob;
+
+            SetValidation($"Job '{updatedJobName}' updated successfully.");
+        }
+
+        private bool ValidateJobForm()
+        {
+            if (string.IsNullOrWhiteSpace(JobName) ||
+                string.IsNullOrWhiteSpace(SourceDirectory) ||
+                string.IsNullOrWhiteSpace(TargetDirectory))
+            {
+                SetValidation("Error: name, source and target are required.");
+                return false;
+            }
+
+            return true;
         }
 
         private async Task RunSelectedJob()
         {
             if (SelectedJob == null)
             {
-                SetStatus("Select a job before starting a backup.");
+                SetValidation("Error: select a job before starting a backup.");
                 return;
             }
 
@@ -301,9 +348,14 @@ namespace EasySaveApp.ViewModels
             try
             {
                 BackupJob job = SelectedJob;
+                RunLogText = string.Empty;
                 AddActivity($"Starting '{job.Name}' ({job.Type}).");
-                await Task.Run(() => _backupEngine.ExecuteJob(job));
-                SetStatus($"Job '{job.Name}' executed.");
+
+                Task runTask = Task.Run(() => _backupEngine.ExecuteJob(job));
+                await RefreshRunLogsWhileRunning(runTask);
+
+                AddActivity($"Job '{job.Name}' executed.");
+                SetValidation($"Job '{job.Name}' executed.");
             }
             finally
             {
@@ -315,7 +367,7 @@ namespace EasySaveApp.ViewModels
         {
             if (Jobs.Count == 0)
             {
-                SetStatus("No backup jobs to run.");
+                SetValidation("Error: no backup jobs to run.");
                 return;
             }
 
@@ -326,12 +378,16 @@ namespace EasySaveApp.ViewModels
 
                 foreach (BackupJob job in Jobs)
                 {
+                    RunLogText = string.Empty;
                     AddActivity($"Starting '{job.Name}' ({job.Type}).");
-                    await Task.Run(() => _backupEngine.ExecuteJob(job));
+
+                    Task runTask = Task.Run(() => _backupEngine.ExecuteJob(job));
+                    await RefreshRunLogsWhileRunning(runTask);
+
                     AddActivity($"Job '{job.Name}' executed.");
                 }
 
-                SetStatus("All jobs executed.");
+                SetValidation("All jobs executed.");
             }
             finally
             {
@@ -339,18 +395,30 @@ namespace EasySaveApp.ViewModels
             }
         }
 
+        private async Task RefreshRunLogsWhileRunning(Task runTask)
+        {
+            while (!runTask.IsCompleted)
+            {
+                LoadRunLogsForDate(DateTime.Now.ToString("yyyy-MM-dd"));
+                await Task.Delay(500);
+            }
+
+            await runTask;
+            LoadRunLogsForDate(DateTime.Now.ToString("yyyy-MM-dd"));
+        }
+
         private void DeleteSelectedJob()
         {
             if (SelectedJob == null)
             {
-                SetStatus("Select a job before deleting it.");
+                SetValidation("Error: select a job before deleting it.");
                 return;
             }
 
             int index = Jobs.IndexOf(SelectedJob);
             if (index < 0)
             {
-                SetStatus("Selected job was not found.");
+                SetValidation("Error: selected job was not found.");
                 return;
             }
 
@@ -360,7 +428,8 @@ namespace EasySaveApp.ViewModels
             Jobs.RemoveAt(index);
 
             SelectedJob = null;
-            SetStatus($"Job '{jobNameToDelete}' deleted.");
+            ClearForm();
+            SetValidation($"Job '{jobNameToDelete}' deleted successfully.");
         }
 
         private void SaveSettings()
@@ -381,7 +450,7 @@ namespace EasySaveApp.ViewModels
             _configManager.Config.ExtensionsToEncrypt = GetExtensionsToEncrypt();
             _configManager.SaveConfig();
 
-            SetStatus("Settings saved.");
+            SetValidation("Settings saved successfully.");
         }
 
         private List<string> GetExtensionsToEncrypt()
@@ -416,17 +485,74 @@ namespace EasySaveApp.ViewModels
             return extensions;
         }
 
+        private void LoadTodayLogs()
+        {
+            LogDate = DateTime.Now.ToString("yyyy-MM-dd");
+            LoadLogsForSelectedDate();
+        }
+
+        private void LoadLogsForSelectedDate()
+        {
+            if (string.IsNullOrWhiteSpace(LogDate))
+            {
+                SetValidation("Error: enter a date with format yyyy-MM-dd.");
+                return;
+            }
+
+            string date = LogDate.Trim();
+            string logPath = GetLogPath(date);
+
+            if (!File.Exists(logPath))
+            {
+                LoadedLogText = $"No log file found for {date}.";
+                SetValidation($"No log file found for {date}.");
+                return;
+            }
+
+            LoadedLogText = File.ReadAllText(logPath);
+            SetValidation($"Logs loaded for {date}.");
+        }
+
+        private void LoadRunLogsForDate(string date)
+        {
+            string logPath = GetLogPath(date);
+
+            if (!File.Exists(logPath))
+            {
+                RunLogText = "No log entry yet.";
+                return;
+            }
+
+            string[] lines = File.ReadAllLines(logPath);
+            int startIndex = Math.Max(0, lines.Length - 40);
+            List<string> lastLines = new List<string>();
+
+            for (int i = startIndex; i < lines.Length; i++)
+            {
+                lastLines.Add(lines[i]);
+            }
+
+            RunLogText = string.Join(Environment.NewLine, lastLines);
+        }
+
+        private string GetLogPath(string date)
+        {
+            string extension = SelectedLogFormat == "Xml" ? ".xml" : ".json";
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", date + extension);
+        }
+
         private void ClearForm()
         {
             JobName = string.Empty;
             SourceDirectory = string.Empty;
             TargetDirectory = string.Empty;
             SelectedBackupType = "Full";
+            ValidationMessage = string.Empty;
         }
 
-        private void SetStatus(string message)
+        private void SetValidation(string message)
         {
-            StatusMessage = message;
+            ValidationMessage = message;
             AddActivity(message);
         }
 
