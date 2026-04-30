@@ -1,31 +1,31 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Text.Json;
-using System.Threading.Tasks;
-using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using EasyLog;
 using EasySave.Models;
 using EasySave.Services;
+using System.Collections.ObjectModel;
+using System.Text.Json;
+using System.Windows.Input;
 
 namespace EasySaveApp.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
+        // --- Services & Managers ---
         private readonly JobManager _jobManager;
         private readonly BackupEngine _backupEngine;
         private readonly ConfigManager _configManager;
+
         private int _validationMessageVersion;
         private string _runningJobName = string.Empty;
 
+        // --- Collections for UI Binding ---
         public ObservableCollection<BackupJob> Jobs { get; set; }
         public ObservableCollection<SelectableBackupJob> SelectableJobs { get; set; }
         public ObservableCollection<string> ActivityMessages { get; set; }
         public ObservableCollection<string> BackupTypes { get; set; }
         public ObservableCollection<string> LogFormats { get; set; }
 
+        // --- Selected Job Property ---
         private BackupJob? _selectedJob;
         public BackupJob? SelectedJob
         {
@@ -35,84 +35,63 @@ namespace EasySaveApp.ViewModels
                 SetProperty(ref _selectedJob, value);
                 OnPropertyChanged(nameof(HasSelectedJob));
 
+                (DeleteJobCommand as IRelayCommand)?.NotifyCanExecuteChanged();
+
                 if (_selectedJob != null)
                 {
                     JobName = _selectedJob.Name;
                     SourceDirectory = _selectedJob.SourceDirectory;
                     TargetDirectory = _selectedJob.TargetDirectory;
-                    // Utilise la traduction pour préremplir
                     SelectedBackupType = _selectedJob.Type == BackupType.Full ? FullText : DiffText;
                 }
             }
         }
 
+        // --- Form Properties ---
         private string _jobName = string.Empty;
-        public string JobName
-        {
-            get => _jobName;
-            set => SetProperty(ref _jobName, value);
-        }
+        public string JobName { get => _jobName; set => SetProperty(ref _jobName, value); }
 
         private string _sourceDirectory = string.Empty;
-        public string SourceDirectory
-        {
-            get => _sourceDirectory;
-            set => SetProperty(ref _sourceDirectory, value);
-        }
+        public string SourceDirectory { get => _sourceDirectory; set => SetProperty(ref _sourceDirectory, value); }
 
         private string _targetDirectory = string.Empty;
-        public string TargetDirectory
-        {
-            get => _targetDirectory;
-            set => SetProperty(ref _targetDirectory, value);
-        }
+        public string TargetDirectory { get => _targetDirectory; set => SetProperty(ref _targetDirectory, value); }
 
         private string _selectedBackupType = "Full";
-        public string SelectedBackupType
-        {
-            get => _selectedBackupType;
-            set => SetProperty(ref _selectedBackupType, value);
-        }
+        public string SelectedBackupType { get => _selectedBackupType; set => SetProperty(ref _selectedBackupType, value); }
 
+        // --- Settings Properties ---
         private string _selectedLogFormat = "Json";
-        public string SelectedLogFormat
-        {
-            get => _selectedLogFormat;
-            set => SetProperty(ref _selectedLogFormat, value);
-        }
+        public string SelectedLogFormat { get => _selectedLogFormat; set => SetProperty(ref _selectedLogFormat, value); }
 
         private string _businessSoftware = string.Empty;
-        public string BusinessSoftware
-        {
-            get => _businessSoftware;
-            set => SetProperty(ref _businessSoftware, value);
-        }
+        public string BusinessSoftware { get => _businessSoftware; set => SetProperty(ref _businessSoftware, value); }
 
         private string _extensionsToEncrypt = string.Empty;
-        public string ExtensionsToEncrypt
-        {
-            get => _extensionsToEncrypt;
-            set => SetProperty(ref _extensionsToEncrypt, value);
-        }
+        public string ExtensionsToEncrypt { get => _extensionsToEncrypt; set => SetProperty(ref _extensionsToEncrypt, value); }
 
         private string _cryptoKey = string.Empty;
-        public string CryptoKey
-        {
-            get => _cryptoKey;
-            set => SetProperty(ref _cryptoKey, value);
-        }
+        public string CryptoKey { get => _cryptoKey; set => SetProperty(ref _cryptoKey, value); }
 
+        // --- State Properties (IsBusy prevents spamming buttons) ---
         private bool _isBusy;
         public bool IsBusy
         {
             get => _isBusy;
             set
             {
-                SetProperty(ref _isBusy, value);
-                OnPropertyChanged(nameof(IsReady));
+                if (SetProperty(ref _isBusy, value))
+                {
+                    OnPropertyChanged(nameof(IsReady));
+                    // Update buttons state dynamically
+                    (RunJobsCommand as IRelayCommand)?.NotifyCanExecuteChanged();
+                    (RunAllJobsCommand as IRelayCommand)?.NotifyCanExecuteChanged();
+                    (DeleteJobCommand as IRelayCommand)?.NotifyCanExecuteChanged();
+                }
             }
         }
 
+        // --- Validation & Feedback Messages ---
         private string _validationMessage = string.Empty;
         public string ValidationMessage
         {
@@ -136,66 +115,33 @@ namespace EasySaveApp.ViewModels
         }
 
         private string _validationMessageColor = "#1E425A";
-        public string ValidationMessageColor
-        {
-            get => _validationMessageColor;
-            set => SetProperty(ref _validationMessageColor, value);
-        }
+        public string ValidationMessageColor { get => _validationMessageColor; set => SetProperty(ref _validationMessageColor, value); }
 
         private string _validationMessageBackground = "#EAF3F8";
-        public string ValidationMessageBackground
-        {
-            get => _validationMessageBackground;
-            set => SetProperty(ref _validationMessageBackground, value);
-        }
+        public string ValidationMessageBackground { get => _validationMessageBackground; set => SetProperty(ref _validationMessageBackground, value); }
 
-        public bool HasValidationMessage
-        {
-            get => !string.IsNullOrWhiteSpace(ValidationMessage);
-        }
+        public bool HasValidationMessage => !string.IsNullOrWhiteSpace(ValidationMessage);
 
+        // --- Run Log & Progress Properties ---
         private string _runLogText = string.Empty;
-        public string RunLogText
-        {
-            get => _runLogText;
-            set => SetProperty(ref _runLogText, value);
-        }
+        public string RunLogText { get => _runLogText; set => SetProperty(ref _runLogText, value); }
 
         private int _backupProgress;
-        public int BackupProgress
-        {
-            get => _backupProgress;
-            set => SetProperty(ref _backupProgress, value);
-        }
+        public int BackupProgress { get => _backupProgress; set => SetProperty(ref _backupProgress, value); }
 
         private string _logDate = DateTime.Now.ToString("yyyy-MM-dd");
-        public string LogDate
-        {
-            get => _logDate;
-            set => SetProperty(ref _logDate, value);
-        }
+        public string LogDate { get => _logDate; set => SetProperty(ref _logDate, value); }
 
         private string _loadedLogText = string.Empty;
-        public string LoadedLogText
-        {
-            get => _loadedLogText;
-            set => SetProperty(ref _loadedLogText, value);
-        }
+        public string LoadedLogText { get => _loadedLogText; set => SetProperty(ref _loadedLogText, value); }
 
-        public bool HasSelectedJob
-        {
-            get => SelectedJob != null;
-        }
+        public bool HasSelectedJob => SelectedJob != null;
+        public bool IsReady => !IsBusy;
 
-        public bool IsReady
-        {
-            get => !IsBusy;
-        }
-
+        // --- Commands ---
         public ICommand CreateJobCommand { get; }
         public ICommand UpdateJobCommand { get; }
-        public ICommand RunJobCommand { get; }
-        public ICommand RunSelectedJobsCommand { get; }
+        public ICommand RunJobsCommand { get; }
         public ICommand RunAllJobsCommand { get; }
         public ICommand DeleteJobCommand { get; }
         public ICommand SaveSettingsCommand { get; }
@@ -207,7 +153,7 @@ namespace EasySaveApp.ViewModels
 
         private bool _isFrench;
 
-        // --- TRADUCTIONS ---
+        // --- Translations ---
         public string FullText => _isFrench ? "Complet" : "Full";
         public string DiffText => _isFrench ? "Différentiel" : "Differential";
         public string TabJobHeader => _isFrench ? "Tâches" : "Jobs";
@@ -233,8 +179,9 @@ namespace EasySaveApp.ViewModels
         public string CryptoKeyLabel => _isFrench ? "Cle CryptoSoft" : "Crypto key";
         public string ActivityTitle => _isFrench ? "Activite" : "Activity";
         public string RunLogsTitle => _isFrench ? "Logs en temps reel" : "Real-time logs";
-        public string RunSelectedText => _isFrench ? "Lancer selection" : "Run selected";
-        public string RunCheckedText => _isFrench ? "Lancer coches" : "Run checked";
+
+        public string RunText => _isFrench ? "Lancer" : "Run";
+
         public string RunAllText => _isFrench ? "Tout lancer" : "Run all";
         public string DeleteSelectedText => _isFrench ? "Supprimer" : "Delete";
         public string CreateText => _isFrench ? "Creer" : "Create";
@@ -261,7 +208,6 @@ namespace EasySaveApp.ViewModels
 
             ActivityMessages = new ObservableCollection<string>();
 
-            // Initialisation avec la traduction
             BackupTypes = new ObservableCollection<string> { FullText, DiffText };
             SelectedBackupType = FullText;
 
@@ -274,10 +220,11 @@ namespace EasySaveApp.ViewModels
 
             CreateJobCommand = new RelayCommand(CreateJob);
             UpdateJobCommand = new RelayCommand(UpdateJob);
-            RunJobCommand = new AsyncRelayCommand(RunSelectedJob);
-            RunSelectedJobsCommand = new AsyncRelayCommand(RunCheckedJobs);
-            RunAllJobsCommand = new AsyncRelayCommand(RunAllJobs);
-            DeleteJobCommand = new RelayCommand(DeleteSelectedJob);
+
+            RunJobsCommand = new AsyncRelayCommand(RunCheckedJobs, () => IsReady);
+            RunAllJobsCommand = new AsyncRelayCommand(RunAllJobs, () => IsReady);
+            DeleteJobCommand = new RelayCommand(DeleteSelectedJob, () => IsReady && HasSelectedJob);
+
             SaveSettingsCommand = new RelayCommand(SaveSettings);
             ClearFormCommand = new RelayCommand(ClearForm);
             LoadLogsCommand = new RelayCommand(LoadLogsForSelectedDate);
@@ -288,19 +235,8 @@ namespace EasySaveApp.ViewModels
             AddActivity("EasySave GUI initialized.");
         }
 
-        private void SetEnglish()
-        {
-            _isFrench = false;
-            RefreshLanguage();
-            SetValidation("Language changed to English.");
-        }
-
-        private void SetFrench()
-        {
-            _isFrench = true;
-            RefreshLanguage();
-            SetValidation("Langue changee en francais.");
-        }
+        private void SetEnglish() { _isFrench = false; RefreshLanguage(); SetValidation("Language changed to English."); }
+        private void SetFrench() { _isFrench = true; RefreshLanguage(); SetValidation("Langue changee en francais."); }
 
         private void RefreshLanguage()
         {
@@ -328,8 +264,7 @@ namespace EasySaveApp.ViewModels
             OnPropertyChanged(nameof(CryptoKeyLabel));
             OnPropertyChanged(nameof(ActivityTitle));
             OnPropertyChanged(nameof(RunLogsTitle));
-            OnPropertyChanged(nameof(RunSelectedText));
-            OnPropertyChanged(nameof(RunCheckedText));
+            OnPropertyChanged(nameof(RunText));
             OnPropertyChanged(nameof(RunAllText));
             OnPropertyChanged(nameof(DeleteSelectedText));
             OnPropertyChanged(nameof(CreateText));
@@ -339,7 +274,6 @@ namespace EasySaveApp.ViewModels
             OnPropertyChanged(nameof(LoadLogsText));
             OnPropertyChanged(nameof(LoadTodayLogsText));
 
-            // Met à jour la liste déroulante en gardant la sélection
             bool isFull = SelectedBackupType == "Full" || SelectedBackupType == "Complet";
             BackupTypes.Clear();
             BackupTypes.Add(FullText);
@@ -349,16 +283,11 @@ namespace EasySaveApp.ViewModels
 
         private void CreateJob()
         {
-            if (!ValidateJobForm())
-            {
-                return;
-            }
+            if (!ValidateJobForm()) return;
 
             string name = JobName.Trim();
             string source = SourceDirectory.Trim().Trim('"');
             string target = TargetDirectory.Trim().Trim('"');
-
-            // Vérification avec la traduction
             BackupType type = SelectedBackupType == FullText ? BackupType.Full : BackupType.Differential;
 
             BackupJob newJob = new BackupJob(name, source, target, type);
@@ -374,34 +303,16 @@ namespace EasySaveApp.ViewModels
 
         private void UpdateJob()
         {
-            if (SelectedJob == null)
-            {
-                SetValidation("Error: select a job before updating it.");
-                return;
-            }
-
-            if (!ValidateJobForm())
-            {
-                return;
-            }
+            if (SelectedJob == null) { SetValidation("Error: select a job before updating it."); return; }
+            if (!ValidateJobForm()) return;
 
             string updatedJobName = JobName.Trim();
             int index = Jobs.IndexOf(SelectedJob);
 
-            if (index < 0)
-            {
-                SetValidation("Error: selected job was not found.");
-                return;
-            }
+            if (index < 0) { SetValidation("Error: selected job was not found."); return; }
 
-            // Vérification avec la traduction
             BackupType type = SelectedBackupType == FullText ? BackupType.Full : BackupType.Differential;
-
-            BackupJob updatedJob = new BackupJob(
-                updatedJobName,
-                SourceDirectory.Trim().Trim('"'),
-                TargetDirectory.Trim().Trim('"'),
-                type);
+            BackupJob updatedJob = new BackupJob(updatedJobName, SourceDirectory.Trim().Trim('"'), TargetDirectory.Trim().Trim('"'), type);
 
             _jobManager.UpdateJob(index, updatedJob);
             Jobs[index] = updatedJob;
@@ -413,41 +324,52 @@ namespace EasySaveApp.ViewModels
 
         private bool ValidateJobForm()
         {
-            if (string.IsNullOrWhiteSpace(JobName) ||
-                string.IsNullOrWhiteSpace(SourceDirectory) ||
-                string.IsNullOrWhiteSpace(TargetDirectory))
+            if (string.IsNullOrWhiteSpace(JobName) || string.IsNullOrWhiteSpace(SourceDirectory) || string.IsNullOrWhiteSpace(TargetDirectory))
             {
                 SetValidation("Error: name, source and target are required.");
                 return false;
             }
-
             return true;
         }
 
-        private async Task RunSelectedJob()
+        private async Task RunCheckedJobs()
         {
-            if (SelectedJob == null)
+            List<BackupJob> checkedJobs = new List<BackupJob>();
+
+            foreach (SelectableBackupJob selectableJob in SelectableJobs)
             {
-                SetValidation("Error: select a job before starting a backup.");
+                if (selectableJob.IsSelected)
+                {
+                    checkedJobs.Add(selectableJob.Job);
+                }
+            }
+
+            if (checkedJobs.Count == 0)
+            {
+                SetValidation("Error: select at least one checked job to run.");
                 return;
             }
 
             IsBusy = true;
             try
             {
-                BackupJob job = SelectedJob;
-                _runningJobName = job.Name;
-                RunLogText = string.Empty;
-                BackupProgress = 0;
-                AddActivity($"Starting '{job.Name}' ({job.Type}).");
+                AddActivity($"Sequential execution started for {checkedJobs.Count} job(s).");
 
-                Task runTask = Task.Run(() => _backupEngine.ExecuteJob(job));
-                await RefreshRunLogsWhileRunning(runTask);
+                foreach (BackupJob job in checkedJobs)
+                {
+                    _runningJobName = job.Name;
+                    RunLogText = string.Empty;
+                    BackupProgress = 0;
+                    AddActivity($"Starting '{job.Name}' ({job.Type}).");
 
-                AddActivity($"Job '{job.Name}' executed.");
-                BackupProgress = 100;
-                SetValidation($"Job '{job.Name}' executed.");
-                _runningJobName = string.Empty;
+                    Task runTask = Task.Run(() => _backupEngine.ExecuteJob(job));
+                    await RefreshRunLogsWhileRunning(runTask);
+
+                    AddActivity($"Job '{job.Name}' executed.");
+                    BackupProgress = 100;
+                }
+
+                SetValidation("Selected jobs executed.");
             }
             finally
             {
@@ -458,11 +380,7 @@ namespace EasySaveApp.ViewModels
 
         private async Task RunAllJobs()
         {
-            if (Jobs.Count == 0)
-            {
-                SetValidation("Error: no backup jobs to run.");
-                return;
-            }
+            if (Jobs.Count == 0) { SetValidation("Error: no backup jobs to run."); return; }
 
             IsBusy = true;
             try
@@ -484,7 +402,6 @@ namespace EasySaveApp.ViewModels
                 }
 
                 SetValidation("All jobs executed.");
-                _runningJobName = string.Empty;
             }
             finally
             {
@@ -501,9 +418,7 @@ namespace EasySaveApp.ViewModels
                 LoadCurrentProgress();
 
                 if (BackupProgress < 95)
-                {
                     BackupProgress++;
-                }
 
                 await Task.Delay(100);
             }
@@ -513,65 +428,12 @@ namespace EasySaveApp.ViewModels
             LoadCurrentProgress();
         }
 
-        private async Task RunCheckedJobs()
-        {
-            List<BackupJob> checkedJobs = new List<BackupJob>();
-
-            foreach (SelectableBackupJob selectableJob in SelectableJobs)
-            {
-                if (selectableJob.IsSelected)
-                {
-                    checkedJobs.Add(selectableJob.Job);
-                }
-            }
-
-            if (checkedJobs.Count == 0)
-            {
-                SetValidation("Error: select at least one checked job.");
-                return;
-            }
-
-            IsBusy = true;
-            try
-            {
-                AddActivity("Sequential execution started for checked jobs.");
-
-                foreach (BackupJob job in checkedJobs)
-                {
-                    _runningJobName = job.Name;
-                    RunLogText = string.Empty;
-                    BackupProgress = 0;
-                    AddActivity($"Starting '{job.Name}' ({job.Type}).");
-
-                    Task runTask = Task.Run(() => _backupEngine.ExecuteJob(job));
-                    await RefreshRunLogsWhileRunning(runTask);
-
-                    AddActivity($"Job '{job.Name}' executed.");
-                    BackupProgress = 100;
-                }
-
-                SetValidation("Checked jobs executed.");
-            }
-            finally
-            {
-                _runningJobName = string.Empty;
-                IsBusy = false;
-            }
-        }
-
         private void LoadCurrentProgress()
         {
-            if (string.IsNullOrWhiteSpace(_runningJobName))
-            {
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(_runningJobName)) return;
 
             string statePath = GetStatePath();
-
-            if (!File.Exists(statePath))
-            {
-                return;
-            }
+            if (!File.Exists(statePath)) return;
 
             try
             {
@@ -585,24 +447,13 @@ namespace EasySaveApp.ViewModels
 
                     if (startIndex >= 0 && endIndex > startIndex)
                     {
-                        if (!xml.Contains("<Name>" + _runningJobName + "</Name>", StringComparison.OrdinalIgnoreCase))
-                        {
-                            return;
-                        }
-
-                        if (!xml.Contains("<State>ACTIVE</State>", StringComparison.OrdinalIgnoreCase))
-                        {
-                            return;
-                        }
+                        if (!xml.Contains("<Name>" + _runningJobName + "</Name>", StringComparison.OrdinalIgnoreCase)) return;
+                        if (!xml.Contains("<State>ACTIVE</State>", StringComparison.OrdinalIgnoreCase)) return;
 
                         startIndex += startTag.Length;
                         string value = xml.Substring(startIndex, endIndex - startIndex);
-                        if (int.TryParse(value, out int progress))
-                        {
-                            BackupProgress = progress;
-                        }
+                        if (int.TryParse(value, out int progress)) BackupProgress = progress;
                     }
-
                     return;
                 }
 
@@ -625,26 +476,21 @@ namespace EasySaveApp.ViewModels
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // The state file can be read while Logger is writing it.
+                // The state file might be locked by the Logger writing to it.
+                // We output to the console instead of UI to prevent spamming messages 10 times a second.
+                Console.WriteLine($"[WARNING] Failed to read state file: {ex.Message}");
+                RunLogText = $"[Warning] Reading state file currently locked... ({ex.Message})";
             }
         }
 
         private void DeleteSelectedJob()
         {
-            if (SelectedJob == null)
-            {
-                SetValidation("Error: select a job before deleting it.");
-                return;
-            }
+            if (SelectedJob == null) { SetValidation("Error: select a job before deleting it."); return; }
 
             int index = Jobs.IndexOf(SelectedJob);
-            if (index < 0)
-            {
-                SetValidation("Error: selected job was not found.");
-                return;
-            }
+            if (index < 0) { SetValidation("Error: selected job was not found."); return; }
 
             string jobNameToDelete = SelectedJob.Name;
 
@@ -673,6 +519,7 @@ namespace EasySaveApp.ViewModels
             _configManager.Config.BusinessSoftware = BusinessSoftware.Trim();
             _configManager.Config.CryptoKey = CryptoKey.Trim();
             _configManager.Config.ExtensionsToEncrypt = GetExtensionsToEncrypt();
+
             _configManager.SaveConfig();
 
             SetValidation("Settings saved successfully.");
@@ -686,44 +533,24 @@ namespace EasySaveApp.ViewModels
             foreach (string part in parts)
             {
                 string extension = part.Trim();
+                if (!extension.StartsWith('.')) extension = "." + extension;
 
-                if (!extension.StartsWith('.'))
+                bool exists = false;
+                foreach (string existing in extensions)
                 {
-                    extension = "." + extension;
+                    if (string.Equals(existing, extension, StringComparison.OrdinalIgnoreCase)) exists = true;
                 }
 
-                bool extensionAlreadyExists = false;
-                foreach (string existingExtension in extensions)
-                {
-                    if (string.Equals(existingExtension, extension, StringComparison.OrdinalIgnoreCase))
-                    {
-                        extensionAlreadyExists = true;
-                    }
-                }
-
-                if (!extensionAlreadyExists)
-                {
-                    extensions.Add(extension);
-                }
+                if (!exists) extensions.Add(extension);
             }
-
             return extensions;
         }
 
-        private void LoadTodayLogs()
-        {
-            LogDate = DateTime.Now.ToString("yyyy-MM-dd");
-            LoadLogsForSelectedDate();
-        }
+        private void LoadTodayLogs() { LogDate = DateTime.Now.ToString("yyyy-MM-dd"); LoadLogsForSelectedDate(); }
 
         private void LoadLogsForSelectedDate()
         {
-            if (string.IsNullOrWhiteSpace(LogDate))
-            {
-                SetValidation("Error: enter a date with format yyyy-MM-dd.");
-                return;
-            }
-
+            if (string.IsNullOrWhiteSpace(LogDate)) { SetValidation("Error: enter a date with format yyyy-MM-dd."); return; }
             string date = LogDate.Trim();
             string logPath = GetLogPath(date);
 
@@ -740,44 +567,28 @@ namespace EasySaveApp.ViewModels
 
         private void LoadRunLogsForDate(string date)
         {
-            string logPath = GetLogPath(date);
+            string logPath = GetStatePath();
+            if (!File.Exists(logPath)) { RunLogText = "No log entry yet."; return; }
 
-            if (!File.Exists(logPath))
+            try
             {
-                RunLogText = "No log entry yet.";
-                return;
+                RunLogText = File.ReadAllText(logPath);
             }
-
-            string[] lines = File.ReadAllLines(logPath);
-            int startIndex = Math.Max(0, lines.Length - 40);
-            List<string> lastLines = new List<string>();
-
-            for (int i = startIndex; i < lines.Length; i++)
+            catch (Exception ex)
             {
-                lastLines.Add(lines[i]);
+                Console.WriteLine($"[WARNING] Could not read realtime logs: {ex.Message}");
             }
-
-            RunLogText = string.Join(Environment.NewLine, lastLines);
         }
 
-        private string GetLogPath(string date)
-        {
-            string extension = SelectedLogFormat == "Xml" ? ".xml" : ".json";
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", date + extension);
-        }
-
-        private string GetStatePath()
-        {
-            string extension = SelectedLogFormat == "Xml" ? ".xml" : ".json";
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", "state" + extension);
-        }
+        private string GetLogPath(string date) => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", date + (SelectedLogFormat == "Xml" ? ".xml" : ".json"));
+        private string GetStatePath() => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", "state" + (SelectedLogFormat == "Xml" ? ".xml" : ".json"));
 
         private void ClearForm()
         {
             JobName = string.Empty;
             SourceDirectory = string.Empty;
             TargetDirectory = string.Empty;
-            SelectedBackupType = FullText; // Remis à la valeur traduite
+            SelectedBackupType = FullText;
             ValidationMessage = string.Empty;
         }
 
@@ -808,45 +619,29 @@ namespace EasySaveApp.ViewModels
             ValidationMessage = message;
             AddActivity(message);
 
+            // Hide message after 10 seconds if a new message hasn't been triggered
             await Task.Delay(10000);
-
-            if (currentVersion == _validationMessageVersion)
-            {
-                ValidationMessage = string.Empty;
-            }
+            if (currentVersion == _validationMessageVersion) ValidationMessage = string.Empty;
         }
 
         private void AddActivity(string message)
         {
             ActivityMessages.Insert(0, $"[{DateTime.Now:HH:mm:ss}] {message}");
-
-            while (ActivityMessages.Count > 40)
-            {
-                ActivityMessages.RemoveAt(ActivityMessages.Count - 1);
-            }
+            while (ActivityMessages.Count > 40) ActivityMessages.RemoveAt(ActivityMessages.Count - 1);
         }
     }
 
     public class SelectableBackupJob : ViewModelBase
     {
         private bool _isSelected;
-
-        public bool IsSelected
-        {
-            get => _isSelected;
-            set => SetProperty(ref _isSelected, value);
-        }
+        public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
 
         public BackupJob Job { get; set; }
-
         public string Name => Job.Name;
         public string SourceDirectory => Job.SourceDirectory;
         public string TargetDirectory => Job.TargetDirectory;
         public BackupType Type => Job.Type;
 
-        public SelectableBackupJob(BackupJob job)
-        {
-            Job = job;
-        }
+        public SelectableBackupJob(BackupJob job) { Job = job; }
     }
 }

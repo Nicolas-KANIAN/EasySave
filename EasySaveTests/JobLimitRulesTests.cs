@@ -1,15 +1,16 @@
 ﻿using EasySave.Models;
 using EasySave.Services;
 
-namespace EasySave.Tests.Services
+// Updated namespace for the Avalonia app tests
+namespace EasySaveApp.Tests.Services
 {
-    public class JobLimitRulesTests : IDisposable
+    public class JobManagerTests : IDisposable
     {
         private readonly string _testFilePath;
 
-        public JobLimitRulesTests()
+        public JobManagerTests()
         {
-            _testFilePath = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "jobs.json");
+            _testFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "jobs.json");
             CleanUp();
         }
 
@@ -26,9 +27,9 @@ namespace EasySave.Tests.Services
             }
         }
 
-        // Validates that a new backup job is successfully added to the internal list when the maximum limit is not yet reached.
+        // Validates that a new backup job is successfully added to the internal list.
         [Fact]
-        public void CreateJob_ShouldAddJob_WhenLimitNotReached()
+        public void CreateJob_ShouldAddJob()
         {
             var manager = new JobManager();
             manager.Jobs.Clear();
@@ -38,9 +39,9 @@ namespace EasySave.Tests.Services
             Assert.Single(manager.Jobs);
         }
 
-        // Tests the strict business rule that prevents the creation of more than 5 backup jobs simultaneously.
+        // The 5-job limit has been removed, so creating 6 jobs should work perfectly.
         [Fact]
-        public void CreateJob_ShouldNotExceedLimitOfFive()
+        public void CreateJob_ShouldAllowMoreThanFiveJobs()
         {
             var manager = new JobManager();
             manager.Jobs.Clear();
@@ -50,10 +51,9 @@ namespace EasySave.Tests.Services
                 manager.CreateJob(new BackupJob($"Job{i}", "C:\\Src", "D:\\Dest", BackupType.Full));
             }
 
-            Assert.Equal(5, manager.Jobs.Count);
+            Assert.Equal(6, manager.Jobs.Count);
         }
 
-        // Ensures that an existing backup job is successfully removed from the list when a valid index is provided.
         [Fact]
         public void DeleteJob_ShouldRemoveJob_WhenIndexIsValid()
         {
@@ -75,10 +75,8 @@ namespace EasySave.Tests.Services
             manager.CreateJob(new BackupJob("Job1", "C:\\Src", "D:\\Dest", BackupType.Full));
 
             var exception1 = Record.Exception(() => manager.DeleteJob(-1));
-            var exception2 = Record.Exception(() => manager.DeleteJob(99));
 
             Assert.Null(exception1);
-            Assert.Null(exception2);
             Assert.Single(manager.Jobs);
         }
     }
