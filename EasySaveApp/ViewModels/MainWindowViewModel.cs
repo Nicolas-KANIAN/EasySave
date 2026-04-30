@@ -439,7 +439,8 @@ namespace EasySaveApp.ViewModels
             {
                 if (SelectedLogFormat == "Xml")
                 {
-                    string xml = File.ReadAllText(statePath);
+                    // UTILISATION DE LA LECTURE SÉCURISÉE
+                    string xml = ReadFileSafely(statePath);
                     string startTag = "<Progression>";
                     string endTag = "</Progression>";
                     int startIndex = xml.IndexOf(startTag, StringComparison.OrdinalIgnoreCase);
@@ -457,7 +458,8 @@ namespace EasySaveApp.ViewModels
                     return;
                 }
 
-                string json = File.ReadAllText(statePath);
+                // UTILISATION DE LA LECTURE SÉCURISÉE
+                string json = ReadFileSafely(statePath);
                 using JsonDocument document = JsonDocument.Parse(json);
 
                 if (document.RootElement.ValueKind == JsonValueKind.Array &&
@@ -478,10 +480,8 @@ namespace EasySaveApp.ViewModels
             }
             catch (Exception ex)
             {
-                // The state file might be locked by the Logger writing to it.
-                // We output to the console instead of UI to prevent spamming messages 10 times a second.
+                // En cas de conflit bref, on évite le crash et on prévient dans la console
                 Console.WriteLine($"[WARNING] Failed to read state file: {ex.Message}");
-                RunLogText = $"[Warning] Reading state file currently locked... ({ex.Message})";
             }
         }
 
@@ -561,8 +561,15 @@ namespace EasySaveApp.ViewModels
                 return;
             }
 
-            LoadedLogText = File.ReadAllText(logPath);
-            SetValidation($"Logs loaded for {date}.");
+            try
+            {
+                LoadedLogText = ReadFileSafely(logPath);
+                SetValidation($"Logs loaded for {date}.");
+            }
+            catch (Exception ex)
+            {
+                LoadedLogText = $"[Error] Cannot load logs right now: {ex.Message}";
+            }
         }
 
         private void LoadRunLogsForDate(string date)
@@ -572,14 +579,21 @@ namespace EasySaveApp.ViewModels
 
             try
             {
-                RunLogText = File.ReadAllText(logPath);
+                RunLogText = ReadFileSafely(logPath);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[WARNING] Could not read realtime logs: {ex.Message}");
             }
         }
-
+        private string ReadFileSafely(string filePath)
+        {
+            using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                return streamReader.ReadToEnd();
+            }
+        }
         private string GetLogPath(string date) => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", date + (SelectedLogFormat == "Xml" ? ".xml" : ".json"));
         private string GetStatePath() => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", "state" + (SelectedLogFormat == "Xml" ? ".xml" : ".json"));
 

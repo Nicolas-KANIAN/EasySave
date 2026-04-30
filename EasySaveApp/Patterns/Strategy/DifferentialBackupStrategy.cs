@@ -11,7 +11,7 @@ namespace EasySave.Patterns.Strategy
             var filesToCopy = new List<string>();
             foreach (var file in allFiles)
             {
-                string relativePath = file.Substring(sourceDirectory.Length + 1);
+                string relativePath = Path.GetRelativePath(sourceDirectory, file);
                 string targetFile = Path.Combine(targetDirectory, relativePath);
 
                 if (!fileSystem.FileExists(targetFile) || fileSystem.GetLastWriteTime(file) > fileSystem.GetLastWriteTime(targetFile))

@@ -16,7 +16,6 @@ namespace EasySave.Services
         private readonly AppConfig _config;
         private readonly EncryptionService _encryptionService;
 
-        // V2.0: Passing AppConfig to access settings (Extensions, BusinessSoftware)
         public BackupEngine(AppConfig config)
         {
             _fileSystem = new LocalFileSystem();
@@ -40,12 +39,10 @@ namespace EasySave.Services
             }
         }
 
-        // V2.0: Method to check if the business software is running
         private bool IsBusinessSoftwareRunning()
         {
             if (string.IsNullOrWhiteSpace(_config.BusinessSoftware)) return false;
 
-            // Process.GetProcessesByName ignores the .exe extension
             string processName = _config.BusinessSoftware;
             if (processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
             {
@@ -59,13 +56,10 @@ namespace EasySave.Services
         {
             Console.WriteLine($"\n[INFO] Starting backup job: {job.Name} ({job.Type})");
 
-            // Ensure progress bar is at 0 at start
             job.Progress = 0;
 
-            // SHOW THE PROGRESS BAR (it will remain visible at the end)
             job.ShowProgress = true;
 
-            // V2.0: Block launch if business software is detected
             if (IsBusinessSoftwareRunning())
             {
                 Console.WriteLine($"[WARNING] Business software '{_config.BusinessSoftware}' is running. Backup job '{job.Name}' cannot be launched.");
@@ -93,7 +87,7 @@ namespace EasySave.Services
             if (totalFiles == 0)
             {
                 Console.WriteLine("[INFO] No files to copy. Backup is up to date.");
-                job.Progress = 100; // Set to 100% directly since everything is up to date
+                job.Progress = 100;
                 return;
             }
 
@@ -112,7 +106,6 @@ namespace EasySave.Services
 
             foreach (var sourceFile in filesToCopy)
             {
-                // V2.0: Detect business software DURING backup
                 if (IsBusinessSoftwareRunning())
                 {
                     Console.WriteLine($"[WARNING] Business software '{_config.BusinessSoftware}' detected! Halting job '{job.Name}'.");
@@ -130,10 +123,10 @@ namespace EasySave.Services
                         EncryptionTime = 0
                     });
 
-                    break; // Clean exit from the loop
+                    break;
                 }
 
-                string relativePath = sourceFile.Substring(job.SourceDirectory.Length + 1);
+                string relativePath = Path.GetRelativePath(job.SourceDirectory, sourceFile);
                 string targetFile = Path.Combine(job.TargetDirectory, relativePath);
                 string targetDir = Path.GetDirectoryName(targetFile) ?? string.Empty;
 
@@ -151,12 +144,10 @@ namespace EasySave.Services
                 {
                     long currentFileSize = _fileSystem.GetFileSize(sourceFile);
 
-                    // 1. Standard file copy
                     _fileSystem.CopyFile(sourceFile, targetFile, true);
                     sw.Stop();
                     long transferTime = sw.ElapsedMilliseconds;
 
-                    // 2. V2.0: Encrypt if the extension matches
                     long encryptionTime = 0;
                     string extension = Path.GetExtension(targetFile);
 
@@ -167,17 +158,14 @@ namespace EasySave.Services
 
                     filesCopied++;
 
-                    // 3. Update state
                     currentState.NbFilesLeftToDo = totalFiles - filesCopied;
                     currentState.RemainingFilesSize -= currentFileSize;
                     currentState.Progression = (int)((double)filesCopied / totalFiles * 100);
 
-                    // Update the UI progress bar
                     job.Progress = currentState.Progression;
 
                     NotifyObservers(currentState);
 
-                    // 4. Log with EncryptionTime
                     LogEntry log = new LogEntry
                     {
                         BackupName = job.Name,
@@ -195,12 +183,11 @@ namespace EasySave.Services
                 }
             }
 
-            // Set to INACTIVE only if the job was not interrupted
             if (currentState.State == "ACTIVE" || currentState.State == "INACTIVE")
             {
                 currentState.State = "INACTIVE";
                 currentState.RemainingFilesSize = 0;
-                job.Progress = 100; // Safety check to ensure the bar finishes at 100%
+                job.Progress = 100;
                 NotifyObservers(currentState);
                 Console.WriteLine($"[INFO] Backup {job.Name} finished successfully.");
             }
