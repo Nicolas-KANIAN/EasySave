@@ -8,7 +8,7 @@ namespace EasySave.Services
     {
         private readonly string _cryptoSoftExe = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CryptoSoft.exe");
 
-        private const int TimeoutMilliseconds = 60_000;
+        private const int _timeoutMilliseconds = 60_000;
 
         public long Encrypt(string filePath, string key)
         {
@@ -30,7 +30,7 @@ namespace EasySave.Services
 
                 if (process is null) return -3;
 
-                if (!process.WaitForExit(TimeoutMilliseconds))
+                if (!process.WaitForExit(_timeoutMilliseconds))
                 {
                     try { process.Kill(true); } catch { }
 
