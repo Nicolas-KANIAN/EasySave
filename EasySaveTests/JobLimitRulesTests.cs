@@ -75,8 +75,10 @@ namespace EasySaveApp.Tests.Services
             manager.CreateJob(new BackupJob("Job1", "C:\\Src", "D:\\Dest", BackupType.Full));
 
             var exception1 = Record.Exception(() => manager.DeleteJob(-1));
+            var exception2 = Record.Exception(() => manager.DeleteJob(99));
 
             Assert.Null(exception1);
+            Assert.Null(exception2);
             Assert.Single(manager.Jobs);
         }
     }

@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace EasySave.Models
 {
@@ -35,6 +36,7 @@ namespace EasySave.Models
         }
 
         // The property that feeds the progress bar
+        [JsonIgnore]
         private double _progress;
         public double Progress
         {
@@ -43,6 +45,7 @@ namespace EasySave.Models
         }
 
         // The property that shows/hides the progress bar
+        [JsonIgnore]
         private bool _showProgress;
         public bool ShowProgress
         {

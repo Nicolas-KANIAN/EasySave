@@ -1,10 +1,14 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
 
 namespace EasySave.Services
 {
     public class EncryptionService
     {
         private readonly string _cryptoSoftExe = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CryptoSoft.exe");
+
+        private const int TimeoutMilliseconds = 60_000;
 
         public long Encrypt(string filePath, string key)
         {
@@ -13,15 +17,31 @@ namespace EasySave.Services
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = _cryptoSoftExe,
-                Arguments = $"\"{filePath}\" \"{key}\"",
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
 
-            using (Process process = Process.Start(startInfo))
+            startInfo.ArgumentList.Add(filePath);
+            startInfo.ArgumentList.Add(key);
+
+            try
             {
-                process.WaitForExit();
+                using Process? process = Process.Start(startInfo);
+
+                if (process is null) return -3;
+
+                if (!process.WaitForExit(TimeoutMilliseconds))
+                {
+                    try { process.Kill(true); } catch { }
+
+                    return -4;
+                }
+
                 return process.ExitCode;
+            }
+            catch (Exception)
+            {
+                return -1;
             }
         }
     }

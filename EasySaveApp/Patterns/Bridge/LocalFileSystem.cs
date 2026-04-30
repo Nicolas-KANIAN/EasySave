@@ -22,7 +22,10 @@
                     files.AddRange(GetFilesRecursive(dir));
                 }
             }
-            catch (UnauthorizedAccessException) { }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"[WARNING] Access denied to '{directory}'. Folder skipped. ({ex.Message})");
+            }
             return files;
         }
     }
