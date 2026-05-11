@@ -1,11 +1,11 @@
 using EasySave.Models;
+using Xunit;
 
-namespace EasySave.Tests
+namespace EasySaveApp.Tests.Models
 {
     public class JobDefinitionTests
     {
         // Verifies that the BackupJob constructor correctly initializes all properties 
-        // (Name, Source Directory, Target Directory, and Backup Type).
         [Fact]
         public void BackupJob_Creation_ShouldSetPropertiesCorrectly()
         {
@@ -20,6 +20,7 @@ namespace EasySave.Tests
             Assert.Equal(expectedSource, job.SourceDirectory);
             Assert.Equal(expectedTarget, job.TargetDirectory);
             Assert.Equal(expectedType, job.Type);
+
         }
     }
 }

@@ -6,7 +6,7 @@ namespace EasySave.Tests.Patterns
 {
     public class BackupStrategySelectionTests
     {
-        // Ensures that the factory returns a FullBackupStrategy instance when the Full backup type is requested.
+        // Ensures that the factory correctly instantiates and returns a FullBackupStrategy 
         [Fact]
         public void CreateStrategy_ShouldReturnFullStrategy_WhenTypeIsFull()
         {
@@ -15,7 +15,7 @@ namespace EasySave.Tests.Patterns
             Assert.IsType<FullBackupStrategy>(strategy);
         }
 
-        // Ensures that the factory returns a DifferentialBackupStrategy instance when the Differential backup type is requested.
+        // Ensures that the factory correctly instantiates and returns a DifferentialBackupStrategy 
         [Fact]
         public void CreateStrategy_ShouldReturnDiffStrategy_WhenTypeIsDiff()
         {
