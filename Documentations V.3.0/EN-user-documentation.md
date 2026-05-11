@@ -16,7 +16,7 @@ You can instantly change the application's language by clicking the **flag icons
 
 ## Getting Started
 
-To launch the application, double-click the `EasySave.exe` executable.
+To launch the application, double-click the `EasySaveApp.exe` executable.
 
 The interface is divided into three tabs:
 1. **Jobs**

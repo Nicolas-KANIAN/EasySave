@@ -4,8 +4,7 @@ Bienvenue dans **EasySave**, une solution de sauvegarde moderne, fiable et perfo
 
 Vous trouverez dans ce manuel une présentation des principales fonctionnalités de l’application ainsi que la manière de les utiliser.
 
-Cette version 2.0 marque une évolution majeure avec une interface graphique intuitive (WPF) organisée par onglets pour une gestion simplifiée de vos données.
-Cette version 3.0 marque une évolution majeure vers le **multi-threading** et le gestion précise de vos transferts de données.
+Cette version 3.0 marque une évolution majeure vers le **multi-threading** et la gestion précise de vos transferts de données.
 
 ---
 
@@ -17,7 +16,7 @@ Vous pouvez changer instantanément la langue de l'application en cliquant sur l
 
 ## Démarrage
 
-Pour lancer l'application, double-cliquez sur l'exécutable `EasySave.exe`. 
+Pour lancer l'application, double-cliquez sur l'exécutable `EasySaveApp.exe`. 
 
 L'interface se divise en trois onglets :
 1.  **Tâches** 
