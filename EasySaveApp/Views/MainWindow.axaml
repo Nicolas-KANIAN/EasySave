@@ -211,6 +211,8 @@
                                 <TextBox Text="{Binding ExtensionsToEncrypt}" Watermark=".txt; .pdf; .docx"/>
                                 <TextBlock Text="{Binding CryptoKeyLabel}" Foreground="#52687A"/>
                                 <TextBox Text="{Binding CryptoKey}" Watermark="EasySave2026"/>
+                                <TextBlock Text="{Binding MaxParallelFilesLabel}" Foreground="#52687A"/>
+                                <TextBox Text="{Binding MaxParallelFiles}" Width="120" HorizontalAlignment="Left" Watermark="3"/>
                             </StackPanel>
                         </Border>
 

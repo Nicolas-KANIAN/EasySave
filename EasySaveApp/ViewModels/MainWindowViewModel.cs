@@ -73,6 +73,9 @@ namespace EasySaveApp.ViewModels
         private string _cryptoKey = string.Empty;
         public string CryptoKey { get => _cryptoKey; set => SetProperty(ref _cryptoKey, value); }
 
+        private string _maxParallelFiles = "3";
+        public string MaxParallelFiles { get => _maxParallelFiles; set => SetProperty(ref _maxParallelFiles, value); }
+
         // --- State Properties (IsBusy prevents spamming buttons) ---
         private bool _isBusy;
         public bool IsBusy
@@ -177,6 +180,7 @@ namespace EasySaveApp.ViewModels
         public string BusinessSoftwareLabel => _isFrench ? "Processus logiciel metier" : "Business software process";
         public string ExtensionsLabel => _isFrench ? "Extensions a chiffrer" : "Extensions to encrypt";
         public string CryptoKeyLabel => _isFrench ? "Cle CryptoSoft" : "Crypto key";
+        public string MaxParallelFilesLabel => _isFrench ? "Fichiers en parallele" : "Parallel files";
         public string ActivityTitle => _isFrench ? "Activite" : "Activity";
         public string RunLogsTitle => _isFrench ? "Logs en temps reel" : "Real-time logs";
 
@@ -217,6 +221,7 @@ namespace EasySaveApp.ViewModels
             BusinessSoftware = _configManager.Config.BusinessSoftware;
             ExtensionsToEncrypt = string.Join("; ", _configManager.Config.ExtensionsToEncrypt);
             CryptoKey = _configManager.Config.CryptoKey;
+            MaxParallelFiles = _configManager.Config.MaxParallelFiles.ToString();
 
             CreateJobCommand = new RelayCommand(CreateJob);
             UpdateJobCommand = new RelayCommand(UpdateJob);
@@ -262,6 +267,7 @@ namespace EasySaveApp.ViewModels
             OnPropertyChanged(nameof(BusinessSoftwareLabel));
             OnPropertyChanged(nameof(ExtensionsLabel));
             OnPropertyChanged(nameof(CryptoKeyLabel));
+            OnPropertyChanged(nameof(MaxParallelFilesLabel));
             OnPropertyChanged(nameof(ActivityTitle));
             OnPropertyChanged(nameof(RunLogsTitle));
             OnPropertyChanged(nameof(RunText));
@@ -519,6 +525,7 @@ namespace EasySaveApp.ViewModels
             _configManager.Config.BusinessSoftware = BusinessSoftware.Trim();
             _configManager.Config.CryptoKey = CryptoKey.Trim();
             _configManager.Config.ExtensionsToEncrypt = GetExtensionsToEncrypt();
+            _configManager.Config.MaxParallelFiles = GetMaxParallelFiles();
 
             _configManager.SaveConfig();
 
@@ -544,6 +551,16 @@ namespace EasySaveApp.ViewModels
                 if (!exists) extensions.Add(extension);
             }
             return extensions;
+        }
+
+        private int GetMaxParallelFiles()
+        {
+            if (int.TryParse(MaxParallelFiles, out int maxParallelFiles) && maxParallelFiles > 0)
+            {
+                return maxParallelFiles;
+            }
+
+            return 3;
         }
 
         private void LoadTodayLogs() { LogDate = DateTime.Now.ToString("yyyy-MM-dd"); LoadLogsForSelectedDate(); }

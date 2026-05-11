@@ -14,6 +14,8 @@ namespace EasySave.Services
 
         public string CryptoSoftPath { get; set; } = "CryptoSoft.exe";
         public string CryptoKey { get; set; } = "EasySave2026";
+
+        public int MaxParallelFiles { get; set; } = 3;
     }
 
     public class ConfigManager
