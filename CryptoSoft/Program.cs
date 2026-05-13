@@ -2,11 +2,11 @@
 {
     public static class Program
     {
-        private static Mutex mutex = new Mutex(false, "Global\\CryptoSoft_SingleInstance_Mutex");
+        private static Mutex _mutex = new Mutex(false, "Global\\CryptoSoft_SingleInstance_Mutex");
 
         public static void Main(string[] args)
         {
-            mutex.WaitOne();
+            _mutex.WaitOne();
 
             try
             {
@@ -23,7 +23,7 @@
             }
             finally
             {
-                mutex.ReleaseMutex();
+                _mutex.ReleaseMutex();
             }
         }
     }

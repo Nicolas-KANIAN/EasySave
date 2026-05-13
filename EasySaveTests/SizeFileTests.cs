@@ -23,7 +23,7 @@ namespace EasySaveApp.Tests.Models
         public void PriorityExtensions_ShouldBeCaseInsensitive(string extension, bool expectedIsPriority)
         {
             var config = new AppConfig();
-            config.PriorityExtensions = new List<string> { ".mp4"};
+            config.PriorityExtensions = new List<string> { ".mp4" };
 
             bool isPriority = config.PriorityExtensions.Contains(extension, System.StringComparer.OrdinalIgnoreCase);
 

@@ -1,5 +1,4 @@
 ﻿using EasySave.Services;
-
 namespace EasySave.Tests.Services
 {
     public class EncryptionServiceTests
@@ -8,17 +7,18 @@ namespace EasySave.Tests.Services
         public void Encrypt_ShouldReturnEncryptionTime_WhenFileIsValid()
         {
             var service = new EncryptionService();
-            string dummyKey = "MaCleSecrete";
+            string dummyKey = "MySecretKey";
 
-            string dummyFilePath = "fichier_test_crypto.txt";
+            // Generate a unique temporary file path
+            string dummyFilePath = Path.GetTempFileName();
 
-            File.WriteAllText(dummyFilePath, "Contenu de test pour voir si le chiffrement fonctionne.");
+            File.WriteAllText(dummyFilePath, "Test content to see if encryption works.");
 
             try
             {
                 long result = service.Encrypt(dummyFilePath, dummyKey);
 
-                Assert.True(result >= 0, $"CryptoSoft a échoué avec le code : {result}");
+                Assert.True(result >= 0, $"CryptoSoft failed with code: {result}");
             }
             finally
             {

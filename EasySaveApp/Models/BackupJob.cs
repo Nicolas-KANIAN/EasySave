@@ -42,24 +42,24 @@ namespace EasySave.Models
             set => SetProperty(ref _type, value);
         }
 
-        [JsonIgnore]
         private double _progress;
+        [JsonIgnore]
         public double Progress
         {
             get => _progress;
             set => SetProperty(ref _progress, value);
         }
 
-        [JsonIgnore]
         private bool _showProgress;
+        [JsonIgnore]
         public bool ShowProgress
         {
             get => _showProgress;
             set => SetProperty(ref _showProgress, value);
         }
 
-        [JsonIgnore]
         private JobState _state;
+        [JsonIgnore]
         public JobState State
         {
             get => _state;

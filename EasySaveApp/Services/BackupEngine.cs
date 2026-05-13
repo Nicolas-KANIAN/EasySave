@@ -21,6 +21,10 @@ namespace EasySave.Services
         private CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly object _stateLock = new object();
 
+        private bool _isUserPaused = false;
+        private bool _isMonitorPaused = false;
+        private readonly object _pauseLock = new object();
+
         private BackupJob? _activeJob;
 
         public BackupEngine(AppConfig config, BusinessSoftwareMonitor monitor)
@@ -31,8 +35,8 @@ namespace EasySave.Services
             _encryptionService = new EncryptionService();
             _businessMonitor = monitor;
 
-            _businessMonitor.SoftwareStarted += (s, e) => PauseJob();
-            _businessMonitor.SoftwareStopped += (s, e) => ResumeJob();
+            _businessMonitor.SoftwareStarted += (s, e) => { lock (_pauseLock) { _isMonitorPaused = true; UpdatePauseState(); } };
+            _businessMonitor.SoftwareStopped += (s, e) => { lock (_pauseLock) { _isMonitorPaused = false; UpdatePauseState(); } };
 
             AttachObserver(new StateLoggerObserver());
         }
@@ -49,14 +53,34 @@ namespace EasySave.Services
 
         public void PauseJob()
         {
-            _pauseEvent.Reset();
-            if (_activeJob != null) _activeJob.State = JobState.Paused;
+            lock (_pauseLock)
+            {
+                _isUserPaused = true;
+                UpdatePauseState();
+            }
         }
 
         public void ResumeJob()
         {
-            _pauseEvent.Set();
-            if (_activeJob != null) _activeJob.State = JobState.Active;
+            lock (_pauseLock)
+            {
+                _isUserPaused = false;
+                UpdatePauseState();
+            }
+        }
+
+        private void UpdatePauseState()
+        {
+            if (_isUserPaused || _isMonitorPaused)
+            {
+                _pauseEvent.Reset();
+                if (_activeJob != null) _activeJob.State = JobState.Paused;
+            }
+            else
+            {
+                _pauseEvent.Set();
+                if (_activeJob != null) _activeJob.State = JobState.Active;
+            }
         }
 
         public void StopJob()
@@ -67,136 +91,154 @@ namespace EasySave.Services
 
         public void ExecuteJob(BackupJob job)
         {
-            _activeJob = job;
-            _cts = new CancellationTokenSource();
-
-            job.Progress = 0;
-            job.ShowProgress = true;
-            job.State = JobState.Active;
-
-            if (_businessMonitor.IsRunning)
-            {
-                job.State = JobState.Paused;
-                _pauseEvent.Reset();
-            }
-
-            if (!_fileSystem.DirectoryExists(job.SourceDirectory)) return;
-            if (!_fileSystem.DirectoryExists(job.TargetDirectory)) _fileSystem.CreateDirectory(job.TargetDirectory);
-
-            var allFiles = _fileSystem.GetFilesRecursive(job.SourceDirectory);
-            IBackupStrategy strategy = BackupFactory.CreateStrategy(job.Type);
-            var filesToCopy = strategy.GetFilesToCopy(job.SourceDirectory, job.TargetDirectory, allFiles, _fileSystem);
-
-            if (_config.PriorityExtensions?.Any() == true)
-            {
-                filesToCopy = filesToCopy.OrderByDescending(f =>
-                    _config.PriorityExtensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase)).ToList();
-            }
-
-            int totalFiles = filesToCopy.Count;
-            long totalSize = filesToCopy.Sum(f => _fileSystem.GetFileSize(f));
-
-            if (totalFiles == 0)
-            {
-                job.Progress = 100;
-                job.State = JobState.Completed;
-                return;
-            }
-
-            int filesCopied = 0;
-            StateEntry currentState = new StateEntry
-            {
-                Name = job.Name,
-                State = "ACTIVE",
-                TotalFilesToCopy = totalFiles,
-                TotalFilesSize = totalSize,
-                NbFilesLeftToDo = totalFiles,
-                RemainingFilesSize = totalSize,
-                Progression = 0
-            };
-
             try
             {
-                var options = new ParallelOptions
+                _activeJob = job;
+                _cts = new CancellationTokenSource();
+
+                job.Progress = 0;
+                job.ShowProgress = true;
+
+                // Evaluate initial pause state immediately using the unified helper
+                lock (_pauseLock)
                 {
-                    MaxDegreeOfParallelism = Environment.ProcessorCount,
-                    CancellationToken = _cts.Token
+                    _isUserPaused = false;
+                    _isMonitorPaused = _businessMonitor.IsRunning;
+                    UpdatePauseState();
+                }
+
+                if (!_fileSystem.DirectoryExists(job.SourceDirectory)) return;
+                if (!_fileSystem.DirectoryExists(job.TargetDirectory)) _fileSystem.CreateDirectory(job.TargetDirectory);
+
+                var allFiles = _fileSystem.GetFilesRecursive(job.SourceDirectory);
+                IBackupStrategy strategy = BackupFactory.CreateStrategy(job.Type);
+                var filesToCopy = strategy.GetFilesToCopy(job.SourceDirectory, job.TargetDirectory, allFiles, _fileSystem);
+
+                if (_config.PriorityExtensions?.Any() == true)
+                {
+                    filesToCopy = filesToCopy.OrderByDescending(f =>
+                        _config.PriorityExtensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase)).ToList();
+                }
+
+                int totalFiles = filesToCopy.Count;
+                long totalSize = filesToCopy.Sum(f => _fileSystem.GetFileSize(f));
+
+                if (totalFiles == 0)
+                {
+                    job.Progress = 100;
+                    job.State = JobState.Completed;
+                    return;
+                }
+
+                int filesCopied = 0;
+                StateEntry currentState = new StateEntry
+                {
+                    Name = job.Name,
+                    State = "ACTIVE",
+                    TotalFilesToCopy = totalFiles,
+                    TotalFilesSize = totalSize,
+                    NbFilesLeftToDo = totalFiles,
+                    RemainingFilesSize = totalSize,
+                    Progression = 0
                 };
 
-                Parallel.ForEach(filesToCopy, options, (sourceFile, state) =>
+                try
                 {
-                    try
+                    var options = new ParallelOptions
                     {
-                        _pauseEvent.WaitOne();
-                        options.CancellationToken.ThrowIfCancellationRequested();
+                        MaxDegreeOfParallelism = Environment.ProcessorCount,
+                        CancellationToken = _cts.Token
+                    };
 
-                        long currentFileSize = _fileSystem.GetFileSize(sourceFile);
-                        bool isLargeFile = (currentFileSize / 1024) > _config.MaxFileSizeKbForSimultaneous;
-
-                        if (isLargeFile)
-                        {
-                            _largeFileLock.Wait(options.CancellationToken);
-                        }
-
+                    Parallel.ForEach(filesToCopy, options, (sourceFile, state) =>
+                    {
                         try
                         {
                             _pauseEvent.WaitOne();
                             options.CancellationToken.ThrowIfCancellationRequested();
 
-                            string relativePath = Path.GetRelativePath(job.SourceDirectory, sourceFile);
-                            string targetFile = Path.Combine(job.TargetDirectory, relativePath);
-                            string targetDir = Path.GetDirectoryName(targetFile) ?? string.Empty;
+                            long currentFileSize = _fileSystem.GetFileSize(sourceFile);
+                            bool isLargeFile = currentFileSize > _config.MaxFileSizeKbForSimultaneous * 1024L;
 
-                            lock (_stateLock)
+                            if (isLargeFile)
                             {
-                                if (!_fileSystem.DirectoryExists(targetDir)) _fileSystem.CreateDirectory(targetDir);
+                                _largeFileLock.Wait(options.CancellationToken);
                             }
 
-                            Stopwatch sw = Stopwatch.StartNew();
-                            _fileSystem.CopyFile(sourceFile, targetFile, true);
-                            sw.Stop();
-
-                            long encryptionTime = 0;
-                            if (_config.ExtensionsToEncrypt.Contains(Path.GetExtension(targetFile), StringComparer.OrdinalIgnoreCase))
+                            try
                             {
-                                encryptionTime = _encryptionService.Encrypt(targetFile, _config.CryptoKey);
+                                _pauseEvent.WaitOne();
+                                options.CancellationToken.ThrowIfCancellationRequested();
+
+                                string relativePath = Path.GetRelativePath(job.SourceDirectory, sourceFile);
+                                string targetFile = Path.Combine(job.TargetDirectory, relativePath);
+                                string targetDir = Path.GetDirectoryName(targetFile) ?? string.Empty;
+
+                                lock (_stateLock)
+                                {
+                                    if (!_fileSystem.DirectoryExists(targetDir)) _fileSystem.CreateDirectory(targetDir);
+                                }
+
+                                Stopwatch sw = Stopwatch.StartNew();
+                                _fileSystem.CopyFile(sourceFile, targetFile, true);
+                                sw.Stop();
+
+                                long encryptionTime = 0;
+                                if (_config.ExtensionsToEncrypt.Contains(Path.GetExtension(targetFile), StringComparer.OrdinalIgnoreCase))
+                                {
+                                    encryptionTime = _encryptionService.Encrypt(targetFile, _config.CryptoKey);
+                                }
+
+                                lock (_stateLock)
+                                {
+                                    filesCopied++;
+                                    currentState.NbFilesLeftToDo = totalFiles - filesCopied;
+                                    currentState.RemainingFilesSize -= currentFileSize;
+                                    currentState.Progression = (int)((double)filesCopied / totalFiles * 100);
+                                    currentState.CurrentSourceFile = sourceFile;
+                                    currentState.CurrentTargetFile = targetFile;
+
+                                    job.Progress = currentState.Progression;
+                                    NotifyObservers(currentState);
+                                }
+
+                                Logger.Instance.WriteDailyLog(new LogEntry
+                                {
+                                    BackupName = job.Name,
+                                    SourceFile = sourceFile,
+                                    TargetFile = targetFile,
+                                    FileSize = currentFileSize,
+                                    TransferTime = sw.ElapsedMilliseconds,
+                                    EncryptionTime = encryptionTime
+                                });
                             }
-
-                            lock (_stateLock)
+                            finally
                             {
-                                filesCopied++;
-                                currentState.NbFilesLeftToDo = totalFiles - filesCopied;
-                                currentState.RemainingFilesSize -= currentFileSize;
-                                currentState.Progression = (int)((double)filesCopied / totalFiles * 100);
-                                currentState.CurrentSourceFile = sourceFile;
-                                currentState.CurrentTargetFile = targetFile;
-
-                                job.Progress = currentState.Progression;
-                                NotifyObservers(currentState);
+                                if (isLargeFile) _largeFileLock.Release();
                             }
-
-                            Logger.Instance.WriteDailyLog(new LogEntry
-                            {
-                                BackupName = job.Name,
-                                SourceFile = sourceFile,
-                                TargetFile = targetFile,
-                                FileSize = currentFileSize,
-                                TransferTime = sw.ElapsedMilliseconds,
-                                EncryptionTime = encryptionTime
-                            });
                         }
-                        finally
+                        catch (OperationCanceledException)
                         {
-                            if (isLargeFile) _largeFileLock.Release();
+                            return;
                         }
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        return;
-                    }
-                });
+                    });
 
-                if (_cts.IsCancellationRequested)
+                    if (_cts.IsCancellationRequested)
+                    {
+                        job.Progress = 0;
+                        job.State = JobState.Aborted;
+                        currentState.Progression = 0;
+                        currentState.State = "ABORTED";
+                        NotifyObservers(currentState);
+                    }
+                    else
+                    {
+                        job.State = JobState.Completed;
+                        currentState.State = "COMPLETED";
+                        NotifyObservers(currentState);
+                    }
+                }
+                catch (OperationCanceledException)
                 {
                     job.Progress = 0;
                     job.State = JobState.Aborted;
@@ -204,24 +246,11 @@ namespace EasySave.Services
                     currentState.State = "ABORTED";
                     NotifyObservers(currentState);
                 }
-                else
-                {
-                    job.State = JobState.Completed;
-                    currentState.State = "COMPLETED";
-                    NotifyObservers(currentState);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                job.Progress = 0;
-                job.State = JobState.Aborted;
-                currentState.Progression = 0;
-                currentState.State = "ABORTED";
-                NotifyObservers(currentState);
             }
             finally
             {
                 _activeJob = null;
+                _pauseEvent.Set();
             }
         }
     }

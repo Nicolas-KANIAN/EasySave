@@ -208,6 +208,12 @@ namespace EasySaveApp.ViewModels
         public string PriorityExtensionsLabel => _isFrench ? "Extensions prioritaires" : "Priority extensions";
         public string MaxFileSizeLabel => _isFrench ? "Taille max (Ko) fichiers" : "Max size (KB) parallel files";
 
+        // === LES 4 PROPRIETES MANQUANTES SONT ICI ===
+        public string BackupOptimizationTitle => _isFrench ? "Optimisation de sauvegarde" : "Backup Optimization";
+        public string JobsCountText => $"{Jobs?.Count ?? 0} {(_isFrench ? "tâches" : "jobs")}";
+        public string SourcePrefix => _isFrench ? "Source :" : "Source:";
+        public string TargetPrefix => _isFrench ? "Cible :" : "Target:";
+
         public MainWindowViewModel()
         {
             _configManager = new ConfigManager();
@@ -225,7 +231,7 @@ namespace EasySaveApp.ViewModels
             SelectableJobs = new ObservableCollection<SelectableBackupJob>();
             foreach (BackupJob job in Jobs)
             {
-                SelectableJobs.Add(new SelectableBackupJob(job));
+                SelectableJobs.Add(new SelectableBackupJob(job, this)); // On envoie le parent pour la langue
             }
 
             ActivityMessages = new ObservableCollection<string>();
@@ -267,19 +273,19 @@ namespace EasySaveApp.ViewModels
         private void PauseJobs()
         {
             _backupEngine.PauseJob();
-            AddActivity("Sauvegarde mise en PAUSE.");
+            AddActivity(_isFrench ? "Sauvegarde mise en PAUSE." : "Backup PAUSED.");
         }
 
         private void ResumeJobs()
         {
             _backupEngine.ResumeJob();
-            AddActivity("Sauvegarde REPRISE.");
+            AddActivity(_isFrench ? "Sauvegarde REPRISE." : "Backup RESUMED.");
         }
 
         private void StopJobs()
         {
             _backupEngine.StopJob();
-            AddActivity("Sauvegarde ANNULÉE par l'utilisateur.");
+            AddActivity(_isFrench ? "Sauvegarde ANNULÉE par l'utilisateur." : "Backup CANCELED by user.");
         }
 
         private void SetEnglish() { _isFrench = false; RefreshLanguage(); SetValidation("Language changed to English."); }
@@ -325,6 +331,13 @@ namespace EasySaveApp.ViewModels
             OnPropertyChanged(nameof(StopText));
             OnPropertyChanged(nameof(PriorityExtensionsLabel));
             OnPropertyChanged(nameof(MaxFileSizeLabel));
+            OnPropertyChanged(nameof(BackupOptimizationTitle));
+            OnPropertyChanged(nameof(JobsCountText));
+
+            foreach (var job in SelectableJobs)
+            {
+                job.RefreshTranslations();
+            }
 
             bool isFull = SelectedBackupType == "Full" || SelectedBackupType == "Complet";
             BackupTypes.Clear();
@@ -346,7 +359,9 @@ namespace EasySaveApp.ViewModels
 
             _jobManager.CreateJob(newJob);
             Jobs.Add(newJob);
-            SelectableJobs.Add(new SelectableBackupJob(newJob));
+            SelectableJobs.Add(new SelectableBackupJob(newJob, this));
+
+            OnPropertyChanged(nameof(JobsCountText));
 
             SelectedJob = newJob;
             ClearForm();
@@ -368,7 +383,7 @@ namespace EasySaveApp.ViewModels
 
             _jobManager.UpdateJob(index, updatedJob);
             Jobs[index] = updatedJob;
-            SelectableJobs[index] = new SelectableBackupJob(updatedJob);
+            SelectableJobs[index] = new SelectableBackupJob(updatedJob, this); // Ajout de 'this'
             SelectedJob = updatedJob;
 
             SetValidation($"Job '{updatedJobName}' updated successfully.");
@@ -406,6 +421,7 @@ namespace EasySaveApp.ViewModels
             try
             {
                 AddActivity($"Execution started for {checkedJobs.Count} job(s).");
+                bool wasAborted = false;
 
                 foreach (BackupJob job in checkedJobs)
                 {
@@ -420,6 +436,7 @@ namespace EasySaveApp.ViewModels
                     if (job.State == JobState.Aborted)
                     {
                         BackupProgress = 0;
+                        wasAborted = true;
                         break;
                     }
 
@@ -427,7 +444,7 @@ namespace EasySaveApp.ViewModels
                     BackupProgress = 100;
                 }
 
-                SetValidation("Jobs execution finished.");
+                SetValidation(wasAborted ? (_isFrench ? "Exécution des tâches annulée." : "Jobs execution aborted.") : (_isFrench ? "Exécution des tâches terminée." : "Jobs execution finished."));
             }
             finally
             {
@@ -444,6 +461,7 @@ namespace EasySaveApp.ViewModels
             try
             {
                 AddActivity("Execution started for all jobs.");
+                bool wasAborted = false;
 
                 foreach (BackupJob job in Jobs)
                 {
@@ -458,6 +476,7 @@ namespace EasySaveApp.ViewModels
                     if (job.State == JobState.Aborted)
                     {
                         BackupProgress = 0;
+                        wasAborted = true;
                         break;
                     }
 
@@ -465,7 +484,7 @@ namespace EasySaveApp.ViewModels
                     BackupProgress = 100;
                 }
 
-                SetValidation("All jobs execution finished.");
+                SetValidation(wasAborted ? (_isFrench ? "Exécution de toutes les tâches annulée." : "All jobs execution aborted.") : (_isFrench ? "Exécution de toutes les tâches terminée." : "All jobs execution finished."));
             }
             finally
             {
@@ -555,6 +574,8 @@ namespace EasySaveApp.ViewModels
             _jobManager.DeleteJob(index);
             Jobs.RemoveAt(index);
             SelectableJobs.RemoveAt(index);
+
+            OnPropertyChanged(nameof(JobsCountText));
 
             SelectedJob = null;
             ClearForm();
@@ -684,7 +705,9 @@ namespace EasySaveApp.ViewModels
             else if (message.Contains("success", StringComparison.OrdinalIgnoreCase) ||
                      message.Contains("executed", StringComparison.OrdinalIgnoreCase) ||
                      message.Contains("loaded", StringComparison.OrdinalIgnoreCase) ||
-                     message.Contains("saved", StringComparison.OrdinalIgnoreCase))
+                     message.Contains("saved", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("finished", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("terminée", StringComparison.OrdinalIgnoreCase))
             {
                 ValidationMessageColor = "#2F7D4A";
                 ValidationMessageBackground = "#E7F4EA";
@@ -712,6 +735,8 @@ namespace EasySaveApp.ViewModels
 
     public class SelectableBackupJob : ViewModelBase
     {
+        private readonly MainWindowViewModel _parent;
+
         private bool _isSelected;
         public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
 
@@ -721,6 +746,19 @@ namespace EasySaveApp.ViewModels
         public string TargetDirectory => Job.TargetDirectory;
         public BackupType Type => Job.Type;
 
-        public SelectableBackupJob(BackupJob job) { Job = job; }
+        public string FormattedSource => $"{_parent.SourcePrefix} {Job.SourceDirectory}";
+        public string FormattedTarget => $"{_parent.TargetPrefix} {Job.TargetDirectory}";
+
+        public SelectableBackupJob(BackupJob job, MainWindowViewModel parent)
+        {
+            Job = job;
+            _parent = parent;
+        }
+
+        public void RefreshTranslations()
+        {
+            OnPropertyChanged(nameof(FormattedSource));
+            OnPropertyChanged(nameof(FormattedTarget));
+        }
     }
 }

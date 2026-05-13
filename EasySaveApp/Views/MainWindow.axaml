@@ -71,7 +71,7 @@
                                         <TextBlock Text="{Binding JobsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
                                         <TextBlock Text="{Binding JobsSubtitle}" Foreground="#66798A"/>
                                     </StackPanel>
-                                    <TextBlock Grid.Column="1" Text="{Binding Jobs.Count, StringFormat='{}{0} jobs'}" Foreground="#245B7D" FontWeight="Bold" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding JobsCountText}" Foreground="#245B7D" FontWeight="Bold" VerticalAlignment="Center"/>
                                 </Grid>
 
                                 <ListBox Grid.Row="1" Classes="job-list" ItemsSource="{Binding SelectableJobs}" SelectedItem="{Binding SelectedSelectableJob}" Margin="0,18,0,18" Background="#F7FAFD" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="6">
@@ -84,8 +84,8 @@
                                                     <Border Grid.Column="2" Background="#EAF3F8" CornerRadius="4" Padding="8,4">
                                                         <TextBlock Text="{Binding Type}" Foreground="#245B7D" FontWeight="SemiBold"/>
                                                     </Border>
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding SourceDirectory, StringFormat='Source: {0}'}" Margin="0,8,0,0" Foreground="#52687A" TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding TargetDirectory, StringFormat='Target: {0}'}" Margin="0,3,0,0" Foreground="#52687A" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding FormattedSource}" Margin="0,8,0,0" Foreground="#52687A" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding FormattedTarget}" Margin="0,3,0,0" Foreground="#52687A" TextTrimming="CharacterEllipsis"/>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -188,7 +188,7 @@
 
                         <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                             <StackPanel Spacing="12">
-                                <TextBlock Text="Backup Optimization" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                                <TextBlock Text="{Binding BackupOptimizationTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
                                 <TextBlock Text="{Binding PriorityExtensionsLabel}" Foreground="#52687A"/>
                                 <TextBox Text="{Binding PriorityExtensions}" Watermark=".pdf; .doc"/>
                                 

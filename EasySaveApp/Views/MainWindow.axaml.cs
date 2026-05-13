@@ -18,15 +18,16 @@ namespace EasySaveApp.Views
             var topLevel = TopLevel.GetTopLevel(this);
             if (topLevel == null) return;
 
-            var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            // On vérifie le DataContext avant pour récupérer la bonne langue
+            if (DataContext is MainWindowViewModel viewModel)
             {
-                Title = "Sélectionner le répertoire source",
-                AllowMultiple = false
-            });
+                var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+                {
+                    Title = viewModel.SourceLabel, // Utilise la traduction du ViewModel
+                    AllowMultiple = false
+                });
 
-            if (folders.Count >= 1)
-            {
-                if (DataContext is MainWindowViewModel viewModel)
+                if (folders.Count >= 1)
                 {
                     viewModel.SourceDirectory = folders[0].Path.LocalPath;
                 }
@@ -39,15 +40,16 @@ namespace EasySaveApp.Views
             var topLevel = TopLevel.GetTopLevel(this);
             if (topLevel == null) return;
 
-            var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            // On vérifie le DataContext avant pour récupérer la bonne langue
+            if (DataContext is MainWindowViewModel viewModel)
             {
-                Title = "Sélectionner le répertoire cible",
-                AllowMultiple = false
-            });
+                var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+                {
+                    Title = viewModel.TargetLabel, // Utilise la traduction du ViewModel
+                    AllowMultiple = false
+                });
 
-            if (folders.Count >= 1)
-            {
-                if (DataContext is MainWindowViewModel viewModel)
+                if (folders.Count >= 1)
                 {
                     viewModel.TargetDirectory = folders[0].Path.LocalPath;
                 }
