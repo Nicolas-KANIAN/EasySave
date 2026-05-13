@@ -8,91 +8,102 @@ using System.Diagnostics;
 
 namespace EasySave.Services
 {
-    // The core execution engine responsible for managing the backup lifecycle.
     public class BackupEngine
     {
         private readonly IFileSystem _fileSystem;
         private readonly List<IBackupObserver> _observers;
         private readonly AppConfig _config;
         private readonly EncryptionService _encryptionService;
+        private readonly BusinessSoftwareMonitor _businessMonitor;
 
-        public BackupEngine(AppConfig config)
+        private static readonly SemaphoreSlim _largeFileLock = new SemaphoreSlim(1, 1);
+        private readonly ManualResetEvent _pauseEvent = new ManualResetEvent(true);
+        private CancellationTokenSource _cts = new CancellationTokenSource();
+        private readonly object _stateLock = new object();
+
+        private BackupJob? _activeJob;
+
+        public BackupEngine(AppConfig config, BusinessSoftwareMonitor monitor)
         {
             _fileSystem = new LocalFileSystem();
             _observers = new List<IBackupObserver>();
             _config = config;
             _encryptionService = new EncryptionService();
+            _businessMonitor = monitor;
+
+            _businessMonitor.SoftwareStarted += (s, e) => PauseJob();
+            _businessMonitor.SoftwareStopped += (s, e) => ResumeJob();
 
             AttachObserver(new StateLoggerObserver());
         }
 
-        public void AttachObserver(IBackupObserver observer)
-        {
-            _observers.Add(observer);
-        }
+        public void AttachObserver(IBackupObserver observer) => _observers.Add(observer);
 
         private void NotifyObservers(StateEntry state)
         {
-            foreach (var observer in _observers)
+            lock (_stateLock)
             {
-                observer.Update(state);
+                foreach (var observer in _observers) observer.Update(state);
             }
         }
 
-        private bool IsBusinessSoftwareRunning()
+        public void PauseJob()
         {
-            if (string.IsNullOrWhiteSpace(_config.BusinessSoftware)) return false;
+            _pauseEvent.Reset();
+            if (_activeJob != null) _activeJob.State = JobState.Paused;
+        }
 
-            string processName = _config.BusinessSoftware;
-            if (processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-            {
-                processName = processName.Substring(0, processName.Length - 4);
-            }
+        public void ResumeJob()
+        {
+            _pauseEvent.Set();
+            if (_activeJob != null) _activeJob.State = JobState.Active;
+        }
 
-            return Process.GetProcessesByName(processName).Length > 0;
+        public void StopJob()
+        {
+            _cts.Cancel();
+            _pauseEvent.Set();
         }
 
         public void ExecuteJob(BackupJob job)
         {
-            Console.WriteLine($"\n[INFO] Starting backup job: {job.Name} ({job.Type})");
+            _activeJob = job;
+            _cts = new CancellationTokenSource();
 
             job.Progress = 0;
-
             job.ShowProgress = true;
+            job.State = JobState.Active;
 
-            if (IsBusinessSoftwareRunning())
+            if (_businessMonitor.IsRunning)
             {
-                Console.WriteLine($"[WARNING] Business software '{_config.BusinessSoftware}' is running. Backup job '{job.Name}' cannot be launched.");
-                return;
+                job.State = JobState.Paused;
+                _pauseEvent.Reset();
             }
 
-            if (!_fileSystem.DirectoryExists(job.SourceDirectory))
-            {
-                Console.WriteLine($"[ERROR] Source directory does not exist: {job.SourceDirectory}");
-                return;
-            }
-
-            if (!_fileSystem.DirectoryExists(job.TargetDirectory))
-            {
-                _fileSystem.CreateDirectory(job.TargetDirectory);
-            }
+            if (!_fileSystem.DirectoryExists(job.SourceDirectory)) return;
+            if (!_fileSystem.DirectoryExists(job.TargetDirectory)) _fileSystem.CreateDirectory(job.TargetDirectory);
 
             var allFiles = _fileSystem.GetFilesRecursive(job.SourceDirectory);
             IBackupStrategy strategy = BackupFactory.CreateStrategy(job.Type);
             var filesToCopy = strategy.GetFilesToCopy(job.SourceDirectory, job.TargetDirectory, allFiles, _fileSystem);
+
+            if (_config.PriorityExtensions?.Any() == true)
+            {
+                filesToCopy = filesToCopy.OrderByDescending(f =>
+                    _config.PriorityExtensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase)).ToList();
+            }
 
             int totalFiles = filesToCopy.Count;
             long totalSize = filesToCopy.Sum(f => _fileSystem.GetFileSize(f));
 
             if (totalFiles == 0)
             {
-                Console.WriteLine("[INFO] No files to copy. Backup is up to date.");
                 job.Progress = 100;
+                job.State = JobState.Completed;
                 return;
             }
 
             int filesCopied = 0;
-
             StateEntry currentState = new StateEntry
             {
                 Name = job.Name,
@@ -104,92 +115,113 @@ namespace EasySave.Services
                 Progression = 0
             };
 
-            foreach (var sourceFile in filesToCopy)
+            try
             {
-                if (IsBusinessSoftwareRunning())
+                var options = new ParallelOptions
                 {
-                    Console.WriteLine($"[WARNING] Business software '{_config.BusinessSoftware}' detected! Halting job '{job.Name}'.");
+                    MaxDegreeOfParallelism = Environment.ProcessorCount,
+                    CancellationToken = _cts.Token
+                };
 
-                    currentState.State = "INTERRUPTED";
-                    NotifyObservers(currentState);
-
-                    Logger.Instance.WriteDailyLog(new LogEntry
+                Parallel.ForEach(filesToCopy, options, (sourceFile, state) =>
+                {
+                    try
                     {
-                        BackupName = job.Name,
-                        SourceFile = "SHUTDOWN",
-                        TargetFile = $"Business software {_config.BusinessSoftware} detected",
-                        FileSize = 0,
-                        TransferTime = 0,
-                        EncryptionTime = 0
-                    });
+                        _pauseEvent.WaitOne();
+                        options.CancellationToken.ThrowIfCancellationRequested();
 
-                    break;
-                }
+                        long currentFileSize = _fileSystem.GetFileSize(sourceFile);
+                        bool isLargeFile = (currentFileSize / 1024) > _config.MaxFileSizeKbForSimultaneous;
 
-                string relativePath = Path.GetRelativePath(job.SourceDirectory, sourceFile);
-                string targetFile = Path.Combine(job.TargetDirectory, relativePath);
-                string targetDir = Path.GetDirectoryName(targetFile) ?? string.Empty;
+                        if (isLargeFile)
+                        {
+                            _largeFileLock.Wait(options.CancellationToken);
+                        }
 
-                if (!_fileSystem.DirectoryExists(targetDir))
-                {
-                    _fileSystem.CreateDirectory(targetDir);
-                }
+                        try
+                        {
+                            _pauseEvent.WaitOne();
+                            options.CancellationToken.ThrowIfCancellationRequested();
 
-                currentState.CurrentSourceFile = sourceFile;
-                currentState.CurrentTargetFile = targetFile;
+                            string relativePath = Path.GetRelativePath(job.SourceDirectory, sourceFile);
+                            string targetFile = Path.Combine(job.TargetDirectory, relativePath);
+                            string targetDir = Path.GetDirectoryName(targetFile) ?? string.Empty;
 
-                Stopwatch sw = Stopwatch.StartNew();
+                            lock (_stateLock)
+                            {
+                                if (!_fileSystem.DirectoryExists(targetDir)) _fileSystem.CreateDirectory(targetDir);
+                            }
 
-                try
-                {
-                    long currentFileSize = _fileSystem.GetFileSize(sourceFile);
+                            Stopwatch sw = Stopwatch.StartNew();
+                            _fileSystem.CopyFile(sourceFile, targetFile, true);
+                            sw.Stop();
 
-                    _fileSystem.CopyFile(sourceFile, targetFile, true);
-                    sw.Stop();
-                    long transferTime = sw.ElapsedMilliseconds;
+                            long encryptionTime = 0;
+                            if (_config.ExtensionsToEncrypt.Contains(Path.GetExtension(targetFile), StringComparer.OrdinalIgnoreCase))
+                            {
+                                encryptionTime = _encryptionService.Encrypt(targetFile, _config.CryptoKey);
+                            }
 
-                    long encryptionTime = 0;
-                    string extension = Path.GetExtension(targetFile);
+                            lock (_stateLock)
+                            {
+                                filesCopied++;
+                                currentState.NbFilesLeftToDo = totalFiles - filesCopied;
+                                currentState.RemainingFilesSize -= currentFileSize;
+                                currentState.Progression = (int)((double)filesCopied / totalFiles * 100);
+                                currentState.CurrentSourceFile = sourceFile;
+                                currentState.CurrentTargetFile = targetFile;
 
-                    if (_config.ExtensionsToEncrypt.Contains(extension))
-                    {
-                        encryptionTime = _encryptionService.Encrypt(targetFile, _config.CryptoKey);
+                                job.Progress = currentState.Progression;
+                                NotifyObservers(currentState);
+                            }
+
+                            Logger.Instance.WriteDailyLog(new LogEntry
+                            {
+                                BackupName = job.Name,
+                                SourceFile = sourceFile,
+                                TargetFile = targetFile,
+                                FileSize = currentFileSize,
+                                TransferTime = sw.ElapsedMilliseconds,
+                                EncryptionTime = encryptionTime
+                            });
+                        }
+                        finally
+                        {
+                            if (isLargeFile) _largeFileLock.Release();
+                        }
                     }
-
-                    filesCopied++;
-
-                    currentState.NbFilesLeftToDo = totalFiles - filesCopied;
-                    currentState.RemainingFilesSize -= currentFileSize;
-                    currentState.Progression = (int)((double)filesCopied / totalFiles * 100);
-
-                    job.Progress = currentState.Progression;
-
-                    NotifyObservers(currentState);
-
-                    LogEntry log = new LogEntry
+                    catch (OperationCanceledException)
                     {
-                        BackupName = job.Name,
-                        SourceFile = sourceFile,
-                        TargetFile = targetFile,
-                        FileSize = currentFileSize,
-                        TransferTime = transferTime,
-                        EncryptionTime = encryptionTime
-                    };
-                    Logger.Instance.WriteDailyLog(log);
-                }
-                catch (Exception ex)
+                        return;
+                    }
+                });
+
+                if (_cts.IsCancellationRequested)
                 {
-                    Console.WriteLine($"[ERROR] Failed to copy/encrypt {sourceFile}: {ex.Message}");
+                    job.Progress = 0;
+                    job.State = JobState.Aborted;
+                    currentState.Progression = 0;
+                    currentState.State = "ABORTED";
+                    NotifyObservers(currentState);
+                }
+                else
+                {
+                    job.State = JobState.Completed;
+                    currentState.State = "COMPLETED";
+                    NotifyObservers(currentState);
                 }
             }
-
-            if (currentState.State == "ACTIVE" || currentState.State == "INACTIVE")
+            catch (OperationCanceledException)
             {
-                currentState.State = "INACTIVE";
-                currentState.RemainingFilesSize = 0;
-                job.Progress = 100;
+                job.Progress = 0;
+                job.State = JobState.Aborted;
+                currentState.Progression = 0;
+                currentState.State = "ABORTED";
                 NotifyObservers(currentState);
-                Console.WriteLine($"[INFO] Backup {job.Name} finished successfully.");
+            }
+            finally
+            {
+                _activeJob = null;
             }
         }
     }

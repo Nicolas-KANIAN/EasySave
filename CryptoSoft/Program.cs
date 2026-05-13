@@ -2,8 +2,12 @@
 {
     public static class Program
     {
+        private static Mutex mutex = new Mutex(false, "Global\\CryptoSoft_SingleInstance_Mutex");
+
         public static void Main(string[] args)
         {
+            mutex.WaitOne();
+
             try
             {
                 if (args.Length < 2) Environment.Exit(-1);
@@ -16,6 +20,10 @@
             catch
             {
                 Environment.Exit(-99);
+            }
+            finally
+            {
+                mutex.ReleaseMutex();
             }
         }
     }

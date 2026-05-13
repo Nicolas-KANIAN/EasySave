@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
+﻿using System.Diagnostics;
 
 namespace EasySave.Services
 {
@@ -10,22 +8,26 @@ namespace EasySave.Services
 
         private const int _timeoutMilliseconds = 60_000;
 
+        private static readonly SemaphoreSlim _cryptoInstanceLock = new SemaphoreSlim(1, 1);
+
         public long Encrypt(string filePath, string key)
         {
             if (!File.Exists(_cryptoSoftExe)) return -2;
 
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                FileName = _cryptoSoftExe,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            startInfo.ArgumentList.Add(filePath);
-            startInfo.ArgumentList.Add(key);
+            _cryptoInstanceLock.Wait();
 
             try
             {
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = _cryptoSoftExe,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                startInfo.ArgumentList.Add(filePath);
+                startInfo.ArgumentList.Add(key);
+
                 using Process? process = Process.Start(startInfo);
 
                 if (process is null) return -3;
@@ -42,6 +44,10 @@ namespace EasySave.Services
             catch (Exception)
             {
                 return -1;
+            }
+            finally
+            {
+                _cryptoInstanceLock.Release();
             }
         }
     }
