@@ -22,7 +22,7 @@ namespace EasySave.Services
 
         public string BusinessSoftware { get; set; } = string.Empty;
 
-        public string CryptoSoftPath { get; set; } = "CryptoSoft.exe";
+        public string CryptoSoftPath { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CryptoSoft.dll");
         public string CryptoKey { get; set; } = string.Empty;
 
         public long MaxFileSizeKbForSimultaneous { get; set; } = 10000;

@@ -68,6 +68,10 @@ namespace EasySave.Models
 
         public BackupJob()
         {
+            _name = string.Empty;
+            _sourceDirectory = string.Empty;
+            _targetDirectory = string.Empty;
+            _type = BackupType.Full;
             _state = JobState.Inactive;
         }
 

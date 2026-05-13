@@ -32,7 +32,7 @@ namespace EasySave.Services
             _fileSystem = new LocalFileSystem();
             _observers = new List<IBackupObserver>();
             _config = config;
-            _encryptionService = new EncryptionService();
+            _encryptionService = new EncryptionService(config);
             _businessMonitor = monitor;
 
             _businessMonitor.SoftwareStarted += (s, e) => { lock (_pauseLock) { _isMonitorPaused = true; UpdatePauseState(); } };

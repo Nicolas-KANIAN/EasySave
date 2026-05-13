@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Threading;
 
 namespace EasySave.Services
 {
@@ -7,17 +10,22 @@ namespace EasySave.Services
         private const int _timeoutMilliseconds = 60_000;
         private static readonly SemaphoreSlim _cryptoInstanceLock = new SemaphoreSlim(1, 1);
 
+        private readonly AppConfig _config;
+
+        public EncryptionService(AppConfig config)
+        {
+            _config = config;
+        }
+
         public long Encrypt(string filePath, string key)
         {
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            string cryptoSoftDll = Path.Combine(baseDir, "CryptoSoft.dll");
+            string cryptoPath = _config.CryptoSoftPath;
 
-            if (!File.Exists(cryptoSoftDll))
+            if (string.IsNullOrWhiteSpace(cryptoPath) ||
+                !File.Exists(cryptoPath) ||
+                !cryptoPath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
             {
-                string fallbackDir = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "CryptoSoft", "bin", "Release", "net8.0"));
-                cryptoSoftDll = Path.Combine(fallbackDir, "CryptoSoft.dll");
-
-                if (!File.Exists(cryptoSoftDll)) return -2;
+                return -2;
             }
 
             _cryptoInstanceLock.Wait();
@@ -31,7 +39,8 @@ namespace EasySave.Services
                     CreateNoWindow = true
                 };
 
-                startInfo.ArgumentList.Add(cryptoSoftDll);
+                startInfo.ArgumentList.Add(cryptoPath);
+
                 startInfo.ArgumentList.Add(filePath);
                 startInfo.ArgumentList.Add(key);
 
