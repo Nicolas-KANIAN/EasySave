@@ -14,6 +14,7 @@ namespace EasySaveApp.ViewModels
         private readonly JobManager _jobManager;
         private readonly BackupEngine _backupEngine;
         private readonly ConfigManager _configManager;
+        private readonly BusinessSoftwareMonitor _businessMonitor;
 
         private int _validationMessageVersion;
         private string _runningJobName = string.Empty;
@@ -73,6 +74,12 @@ namespace EasySaveApp.ViewModels
         private string _cryptoKey = string.Empty;
         public string CryptoKey { get => _cryptoKey; set => SetProperty(ref _cryptoKey, value); }
 
+        private string _priorityExtensions = string.Empty;
+        public string PriorityExtensions { get => _priorityExtensions; set => SetProperty(ref _priorityExtensions, value); }
+
+        private long _maxFileSize = 10000;
+        public long MaxFileSize { get => _maxFileSize; set => SetProperty(ref _maxFileSize, value); }
+
         // --- State Properties (IsBusy prevents spamming buttons) ---
         private bool _isBusy;
         public bool IsBusy
@@ -83,10 +90,13 @@ namespace EasySaveApp.ViewModels
                 if (SetProperty(ref _isBusy, value))
                 {
                     OnPropertyChanged(nameof(IsReady));
-                    // Update buttons state dynamically
                     (RunJobsCommand as IRelayCommand)?.NotifyCanExecuteChanged();
                     (RunAllJobsCommand as IRelayCommand)?.NotifyCanExecuteChanged();
                     (DeleteJobCommand as IRelayCommand)?.NotifyCanExecuteChanged();
+
+                    (PauseJobCommand as IRelayCommand)?.NotifyCanExecuteChanged();
+                    (ResumeJobCommand as IRelayCommand)?.NotifyCanExecuteChanged();
+                    (StopJobCommand as IRelayCommand)?.NotifyCanExecuteChanged();
                 }
             }
         }
@@ -150,6 +160,9 @@ namespace EasySaveApp.ViewModels
         public ICommand LoadTodayLogsCommand { get; }
         public ICommand SetEnglishCommand { get; }
         public ICommand SetFrenchCommand { get; }
+        public ICommand PauseJobCommand { get; }
+        public ICommand ResumeJobCommand { get; }
+        public ICommand StopJobCommand { get; }
 
         private bool _isFrench;
 
@@ -181,7 +194,6 @@ namespace EasySaveApp.ViewModels
         public string RunLogsTitle => _isFrench ? "Logs en temps reel" : "Real-time logs";
 
         public string RunText => _isFrench ? "Lancer" : "Run";
-
         public string RunAllText => _isFrench ? "Tout lancer" : "Run all";
         public string DeleteSelectedText => _isFrench ? "Supprimer" : "Delete";
         public string CreateText => _isFrench ? "Creer" : "Create";
@@ -190,20 +202,36 @@ namespace EasySaveApp.ViewModels
         public string SaveSettingsText => _isFrench ? "Enregistrer" : "Save";
         public string LoadLogsText => _isFrench ? "Ouvrir les logs" : "Open logs";
         public string LoadTodayLogsText => _isFrench ? "Logs du jour" : "Today logs";
+        public string PauseText => _isFrench ? "Pause" : "Pause";
+        public string ResumeText => _isFrench ? "Reprendre" : "Resume";
+        public string StopText => _isFrench ? "Arrêter" : "Stop";
+        public string PriorityExtensionsLabel => _isFrench ? "Extensions prioritaires" : "Priority extensions";
+        public string MaxFileSizeLabel => _isFrench ? "Taille max (Ko) fichiers" : "Max size (KB) parallel files";
+
+        // === LES 4 PROPRIETES MANQUANTES SONT ICI ===
+        public string BackupOptimizationTitle => _isFrench ? "Optimisation de sauvegarde" : "Backup Optimization";
+        public string JobsCountText => $"{Jobs?.Count ?? 0} {(_isFrench ? "tâches" : "jobs")}";
+        public string SourcePrefix => _isFrench ? "Source :" : "Source:";
+        public string TargetPrefix => _isFrench ? "Cible :" : "Target:";
 
         public MainWindowViewModel()
         {
             _configManager = new ConfigManager();
             Logger.Instance.Format = _configManager.Config.LogFormat;
 
+            _businessMonitor = new BusinessSoftwareMonitor();
+            _businessMonitor.SetSoftwareName(_configManager.Config.BusinessSoftware);
+            _businessMonitor.Start();
+
             _jobManager = new JobManager();
-            _backupEngine = new BackupEngine(_configManager.Config);
+
+            _backupEngine = new BackupEngine(_configManager.Config, _businessMonitor);
 
             Jobs = new ObservableCollection<BackupJob>(_jobManager.Jobs);
             SelectableJobs = new ObservableCollection<SelectableBackupJob>();
             foreach (BackupJob job in Jobs)
             {
-                SelectableJobs.Add(new SelectableBackupJob(job));
+                SelectableJobs.Add(new SelectableBackupJob(job, this)); // On envoie le parent pour la langue
             }
 
             ActivityMessages = new ObservableCollection<string>();
@@ -218,12 +246,19 @@ namespace EasySaveApp.ViewModels
             ExtensionsToEncrypt = string.Join("; ", _configManager.Config.ExtensionsToEncrypt);
             CryptoKey = _configManager.Config.CryptoKey;
 
+            PriorityExtensions = string.Join("; ", _configManager.Config.PriorityExtensions);
+            MaxFileSize = _configManager.Config.MaxFileSizeKbForSimultaneous;
+
             CreateJobCommand = new RelayCommand(CreateJob);
             UpdateJobCommand = new RelayCommand(UpdateJob);
 
             RunJobsCommand = new AsyncRelayCommand(RunCheckedJobs, () => IsReady);
             RunAllJobsCommand = new AsyncRelayCommand(RunAllJobs, () => IsReady);
             DeleteJobCommand = new RelayCommand(DeleteSelectedJob, () => IsReady && HasSelectedJob);
+
+            PauseJobCommand = new RelayCommand(PauseJobs, () => IsBusy);
+            ResumeJobCommand = new RelayCommand(ResumeJobs, () => IsBusy);
+            StopJobCommand = new RelayCommand(StopJobs, () => IsBusy);
 
             SaveSettingsCommand = new RelayCommand(SaveSettings);
             ClearFormCommand = new RelayCommand(ClearForm);
@@ -233,6 +268,24 @@ namespace EasySaveApp.ViewModels
             SetFrenchCommand = new RelayCommand(SetFrench);
 
             AddActivity("EasySave GUI initialized.");
+        }
+
+        private void PauseJobs()
+        {
+            _backupEngine.PauseJob();
+            AddActivity(_isFrench ? "Sauvegarde mise en PAUSE." : "Backup PAUSED.");
+        }
+
+        private void ResumeJobs()
+        {
+            _backupEngine.ResumeJob();
+            AddActivity(_isFrench ? "Sauvegarde REPRISE." : "Backup RESUMED.");
+        }
+
+        private void StopJobs()
+        {
+            _backupEngine.StopJob();
+            AddActivity(_isFrench ? "Sauvegarde ANNULÉE par l'utilisateur." : "Backup CANCELED by user.");
         }
 
         private void SetEnglish() { _isFrench = false; RefreshLanguage(); SetValidation("Language changed to English."); }
@@ -273,6 +326,18 @@ namespace EasySaveApp.ViewModels
             OnPropertyChanged(nameof(SaveSettingsText));
             OnPropertyChanged(nameof(LoadLogsText));
             OnPropertyChanged(nameof(LoadTodayLogsText));
+            OnPropertyChanged(nameof(PauseText));
+            OnPropertyChanged(nameof(ResumeText));
+            OnPropertyChanged(nameof(StopText));
+            OnPropertyChanged(nameof(PriorityExtensionsLabel));
+            OnPropertyChanged(nameof(MaxFileSizeLabel));
+            OnPropertyChanged(nameof(BackupOptimizationTitle));
+            OnPropertyChanged(nameof(JobsCountText));
+
+            foreach (var job in SelectableJobs)
+            {
+                job.RefreshTranslations();
+            }
 
             bool isFull = SelectedBackupType == "Full" || SelectedBackupType == "Complet";
             BackupTypes.Clear();
@@ -294,7 +359,9 @@ namespace EasySaveApp.ViewModels
 
             _jobManager.CreateJob(newJob);
             Jobs.Add(newJob);
-            SelectableJobs.Add(new SelectableBackupJob(newJob));
+            SelectableJobs.Add(new SelectableBackupJob(newJob, this));
+
+            OnPropertyChanged(nameof(JobsCountText));
 
             SelectedJob = newJob;
             ClearForm();
@@ -316,7 +383,7 @@ namespace EasySaveApp.ViewModels
 
             _jobManager.UpdateJob(index, updatedJob);
             Jobs[index] = updatedJob;
-            SelectableJobs[index] = new SelectableBackupJob(updatedJob);
+            SelectableJobs[index] = new SelectableBackupJob(updatedJob, this); // Ajout de 'this'
             SelectedJob = updatedJob;
 
             SetValidation($"Job '{updatedJobName}' updated successfully.");
@@ -353,7 +420,8 @@ namespace EasySaveApp.ViewModels
             IsBusy = true;
             try
             {
-                AddActivity($"Sequential execution started for {checkedJobs.Count} job(s).");
+                AddActivity($"Execution started for {checkedJobs.Count} job(s).");
+                bool wasAborted = false;
 
                 foreach (BackupJob job in checkedJobs)
                 {
@@ -365,11 +433,18 @@ namespace EasySaveApp.ViewModels
                     Task runTask = Task.Run(() => _backupEngine.ExecuteJob(job));
                     await RefreshRunLogsWhileRunning(runTask);
 
+                    if (job.State == JobState.Aborted)
+                    {
+                        BackupProgress = 0;
+                        wasAborted = true;
+                        break;
+                    }
+
                     AddActivity($"Job '{job.Name}' executed.");
                     BackupProgress = 100;
                 }
 
-                SetValidation("Selected jobs executed.");
+                SetValidation(wasAborted ? (_isFrench ? "Exécution des tâches annulée." : "Jobs execution aborted.") : (_isFrench ? "Exécution des tâches terminée." : "Jobs execution finished."));
             }
             finally
             {
@@ -385,7 +460,8 @@ namespace EasySaveApp.ViewModels
             IsBusy = true;
             try
             {
-                AddActivity("Sequential execution started for all jobs.");
+                AddActivity("Execution started for all jobs.");
+                bool wasAborted = false;
 
                 foreach (BackupJob job in Jobs)
                 {
@@ -397,11 +473,18 @@ namespace EasySaveApp.ViewModels
                     Task runTask = Task.Run(() => _backupEngine.ExecuteJob(job));
                     await RefreshRunLogsWhileRunning(runTask);
 
+                    if (job.State == JobState.Aborted)
+                    {
+                        BackupProgress = 0;
+                        wasAborted = true;
+                        break;
+                    }
+
                     AddActivity($"Job '{job.Name}' executed.");
                     BackupProgress = 100;
                 }
 
-                SetValidation("All jobs executed.");
+                SetValidation(wasAborted ? (_isFrench ? "Exécution de toutes les tâches annulée." : "All jobs execution aborted.") : (_isFrench ? "Exécution de toutes les tâches terminée." : "All jobs execution finished."));
             }
             finally
             {
@@ -416,9 +499,6 @@ namespace EasySaveApp.ViewModels
             {
                 LoadRunLogsForDate(DateTime.Now.ToString("yyyy-MM-dd"));
                 LoadCurrentProgress();
-
-                if (BackupProgress < 95)
-                    BackupProgress++;
 
                 await Task.Delay(100);
             }
@@ -439,7 +519,6 @@ namespace EasySaveApp.ViewModels
             {
                 if (SelectedLogFormat == "Xml")
                 {
-                    // UTILISATION DE LA LECTURE SÉCURISÉE
                     string xml = ReadFileSafely(statePath);
                     string startTag = "<Progression>";
                     string endTag = "</Progression>";
@@ -458,7 +537,6 @@ namespace EasySaveApp.ViewModels
                     return;
                 }
 
-                // UTILISATION DE LA LECTURE SÉCURISÉE
                 string json = ReadFileSafely(statePath);
                 using JsonDocument document = JsonDocument.Parse(json);
 
@@ -480,7 +558,6 @@ namespace EasySaveApp.ViewModels
             }
             catch (Exception ex)
             {
-                // En cas de conflit bref, on évite le crash et on prévient dans la console
                 Console.WriteLine($"[WARNING] Failed to read state file: {ex.Message}");
             }
         }
@@ -497,6 +574,8 @@ namespace EasySaveApp.ViewModels
             _jobManager.DeleteJob(index);
             Jobs.RemoveAt(index);
             SelectableJobs.RemoveAt(index);
+
+            OnPropertyChanged(nameof(JobsCountText));
 
             SelectedJob = null;
             ClearForm();
@@ -518,17 +597,22 @@ namespace EasySaveApp.ViewModels
 
             _configManager.Config.BusinessSoftware = BusinessSoftware.Trim();
             _configManager.Config.CryptoKey = CryptoKey.Trim();
-            _configManager.Config.ExtensionsToEncrypt = GetExtensionsToEncrypt();
+
+            _configManager.Config.ExtensionsToEncrypt = ParseExtensions(ExtensionsToEncrypt);
+            _configManager.Config.PriorityExtensions = ParseExtensions(PriorityExtensions);
+            _configManager.Config.MaxFileSizeKbForSimultaneous = MaxFileSize;
+
+            _businessMonitor.SetSoftwareName(_configManager.Config.BusinessSoftware);
 
             _configManager.SaveConfig();
 
             SetValidation("Settings saved successfully.");
         }
 
-        private List<string> GetExtensionsToEncrypt()
+        private List<string> ParseExtensions(string input)
         {
             List<string> extensions = new List<string>();
-            string[] parts = ExtensionsToEncrypt.Split(new[] { ';', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] parts = input?.Split(new[] { ';', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
 
             foreach (string part in parts)
             {
@@ -586,6 +670,7 @@ namespace EasySaveApp.ViewModels
                 Console.WriteLine($"[WARNING] Could not read realtime logs: {ex.Message}");
             }
         }
+
         private string ReadFileSafely(string filePath)
         {
             using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
@@ -594,6 +679,7 @@ namespace EasySaveApp.ViewModels
                 return streamReader.ReadToEnd();
             }
         }
+
         private string GetLogPath(string date) => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", date + (SelectedLogFormat == "Xml" ? ".xml" : ".json"));
         private string GetStatePath() => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", "state" + (SelectedLogFormat == "Xml" ? ".xml" : ".json"));
 
@@ -619,7 +705,9 @@ namespace EasySaveApp.ViewModels
             else if (message.Contains("success", StringComparison.OrdinalIgnoreCase) ||
                      message.Contains("executed", StringComparison.OrdinalIgnoreCase) ||
                      message.Contains("loaded", StringComparison.OrdinalIgnoreCase) ||
-                     message.Contains("saved", StringComparison.OrdinalIgnoreCase))
+                     message.Contains("saved", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("finished", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("terminée", StringComparison.OrdinalIgnoreCase))
             {
                 ValidationMessageColor = "#2F7D4A";
                 ValidationMessageBackground = "#E7F4EA";
@@ -647,6 +735,8 @@ namespace EasySaveApp.ViewModels
 
     public class SelectableBackupJob : ViewModelBase
     {
+        private readonly MainWindowViewModel _parent;
+
         private bool _isSelected;
         public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
 
@@ -656,6 +746,19 @@ namespace EasySaveApp.ViewModels
         public string TargetDirectory => Job.TargetDirectory;
         public BackupType Type => Job.Type;
 
-        public SelectableBackupJob(BackupJob job) { Job = job; }
+        public string FormattedSource => $"{_parent.SourcePrefix} {Job.SourceDirectory}";
+        public string FormattedTarget => $"{_parent.TargetPrefix} {Job.TargetDirectory}";
+
+        public SelectableBackupJob(BackupJob job, MainWindowViewModel parent)
+        {
+            Job = job;
+            _parent = parent;
+        }
+
+        public void RefreshTranslations()
+        {
+            OnPropertyChanged(nameof(FormattedSource));
+            OnPropertyChanged(nameof(FormattedTarget));
+        }
     }
 }

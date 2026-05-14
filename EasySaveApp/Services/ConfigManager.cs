@@ -1,9 +1,19 @@
 ﻿using EasyLog;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace EasySave.Services
 {
+    public enum LogDestination
+    {
+        Local,
+        Centralized,
+        Both
+    }
+
     public class AppConfig
     {
         public LogFormat LogFormat { get; set; } = LogFormat.Json;
@@ -12,8 +22,15 @@ namespace EasySave.Services
 
         public string BusinessSoftware { get; set; } = string.Empty;
 
-        public string CryptoSoftPath { get; set; } = "CryptoSoft.exe";
+        public string CryptoSoftPath { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CryptoSoft.dll");
         public string CryptoKey { get; set; } = string.Empty;
+
+        public long MaxFileSizeKbForSimultaneous { get; set; } = 10000;
+
+        public List<string> PriorityExtensions { get; set; } = new List<string>();
+
+        public LogDestination LogDestination { get; set; } = LogDestination.Local;
+        public string DockerLogServerAddress { get; set; } = string.Empty;
     }
 
     public class ConfigManager
