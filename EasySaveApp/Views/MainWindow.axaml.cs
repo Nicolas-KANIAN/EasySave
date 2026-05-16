@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -18,19 +19,20 @@ namespace EasySaveApp.Views
             var topLevel = TopLevel.GetTopLevel(this);
             if (topLevel == null) return;
 
-            // On vérifie le DataContext avant pour récupérer la bonne langue
-            if (DataContext is MainWindowViewModel viewModel)
-            {
-                var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
-                {
-                    Title = viewModel.SourceLabel, // Utilise la traduction du ViewModel
-                    AllowMultiple = false
-                });
+            // Dynamically fetch the translated title from the active Resource Dictionary
+            string dialogTitle = Application.Current?.TryGetResource("SourceLabel", null, out var resource) == true
+                ? resource?.ToString() ?? "Select Source Directory"
+                : "Select Source Directory";
 
-                if (folders.Count >= 1)
-                {
-                    viewModel.SourceDirectory = folders[0].Path.LocalPath;
-                }
+            var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = dialogTitle,
+                AllowMultiple = false
+            });
+
+            if (folders.Count >= 1 && DataContext is MainWindowViewModel viewModel)
+            {
+                viewModel.SourceDirectory = folders[0].Path.LocalPath;
             }
         }
 
@@ -40,19 +42,20 @@ namespace EasySaveApp.Views
             var topLevel = TopLevel.GetTopLevel(this);
             if (topLevel == null) return;
 
-            // On vérifie le DataContext avant pour récupérer la bonne langue
-            if (DataContext is MainWindowViewModel viewModel)
-            {
-                var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
-                {
-                    Title = viewModel.TargetLabel, // Utilise la traduction du ViewModel
-                    AllowMultiple = false
-                });
+            // Dynamically fetch the translated title from the active Resource Dictionary
+            string dialogTitle = Application.Current?.TryGetResource("TargetLabel", null, out var resource) == true
+                ? resource?.ToString() ?? "Select Target Directory"
+                : "Select Target Directory";
 
-                if (folders.Count >= 1)
-                {
-                    viewModel.TargetDirectory = folders[0].Path.LocalPath;
-                }
+            var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = dialogTitle,
+                AllowMultiple = false
+            });
+
+            if (folders.Count >= 1 && DataContext is MainWindowViewModel viewModel)
+            {
+                viewModel.TargetDirectory = folders[0].Path.LocalPath;
             }
         }
     }

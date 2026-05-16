@@ -61,15 +61,15 @@
         </Border>
 
         <TabControl Grid.Row="2" Margin="24">
-            <TabItem Header="{Binding TabJobHeader}">
+            <TabItem Header="{DynamicResource TabJobHeader}">
                 <Grid ColumnDefinitions="1.2*,0.95*" ColumnSpacing="20" Margin="0,16,0,0">
                     <Grid Grid.Column="0" RowDefinitions="*,Auto" RowSpacing="20">
                         <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                             <Grid RowDefinitions="Auto,*,Auto">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="{Binding JobsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
-                                        <TextBlock Text="{Binding JobsSubtitle}" Foreground="#66798A"/>
+                                        <TextBlock Text="{DynamicResource JobsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                                        <TextBlock Text="{DynamicResource JobsSubtitle}" Foreground="#66798A"/>
                                     </StackPanel>
                                     <TextBlock Grid.Column="1" Text="{Binding JobsCountText}" Foreground="#245B7D" FontWeight="Bold" VerticalAlignment="Center"/>
                                 </Grid>
@@ -84,8 +84,16 @@
                                                     <Border Grid.Column="2" Background="#EAF3F8" CornerRadius="4" Padding="8,4">
                                                         <TextBlock Text="{Binding Type}" Foreground="#245B7D" FontWeight="SemiBold"/>
                                                     </Border>
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding FormattedSource}" Margin="0,8,0,0" Foreground="#52687A" TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding FormattedTarget}" Margin="0,3,0,0" Foreground="#52687A" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,8,0,0" Foreground="#52687A" TextTrimming="CharacterEllipsis">
+                                                        <Run Text="{DynamicResource SourcePrefix}"/>
+                                                        <Run Text=" "/>
+                                                        <Run Text="{Binding SourceDirectory}"/>
+                                                    </TextBlock>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,3,0,0" Foreground="#52687A" TextTrimming="CharacterEllipsis">
+                                                        <Run Text="{DynamicResource TargetPrefix}"/>
+                                                        <Run Text=" "/>
+                                                        <Run Text="{Binding TargetDirectory}"/>
+                                                    </TextBlock>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -94,15 +102,15 @@
 
                                 <Grid Grid.Row="2" RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
                                     <StackPanel Orientation="Horizontal" Spacing="10">
-                                        <Button Content="{Binding RunText}" Command="{Binding RunJobsCommand}" IsEnabled="{Binding IsReady}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
-                                        <Button Content="{Binding RunAllText}" Command="{Binding RunAllJobsCommand}" IsEnabled="{Binding IsReady}" Background="#244F38" Foreground="White" Padding="18,10" CornerRadius="6"/>
-                                        <Button Content="{Binding DeleteSelectedText}" Command="{Binding DeleteJobCommand}" IsEnabled="{Binding IsReady}" Background="#B94A48" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                        <Button Content="{DynamicResource RunText}" Command="{Binding RunJobsCommand}" IsEnabled="{Binding IsReady}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                        <Button Content="{DynamicResource RunAllText}" Command="{Binding RunAllJobsCommand}" IsEnabled="{Binding IsReady}" Background="#244F38" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                        <Button Content="{DynamicResource DeleteSelectedText}" Command="{Binding DeleteJobCommand}" IsEnabled="{Binding IsReady}" Background="#B94A48" Foreground="White" Padding="18,10" CornerRadius="6"/>
                                     </StackPanel>
 
                                     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" IsVisible="{Binding IsBusy}">
-                                        <Button Content="{Binding PauseText}" Command="{Binding PauseJobCommand}" Background="#E67E22" Foreground="White" Padding="12,6" CornerRadius="4"/>
-                                        <Button Content="{Binding ResumeText}" Command="{Binding ResumeJobCommand}" Background="#27AE60" Foreground="White" Padding="12,6" CornerRadius="4"/>
-                                        <Button Content="{Binding StopText}" Command="{Binding StopJobCommand}" Background="#C0392B" Foreground="White" Padding="12,6" CornerRadius="4"/>
+                                        <Button Content="{DynamicResource PauseText}" Command="{Binding PauseJobCommand}" Background="#E67E22" Foreground="White" Padding="12,6" CornerRadius="4"/>
+                                        <Button Content="{DynamicResource ResumeText}" Command="{Binding ResumeJobCommand}" Background="#27AE60" Foreground="White" Padding="12,6" CornerRadius="4"/>
+                                        <Button Content="{DynamicResource StopText}" Command="{Binding StopJobCommand}" Background="#C0392B" Foreground="White" Padding="12,6" CornerRadius="4"/>
                                     </StackPanel>
 
                                     <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="12">
@@ -115,7 +123,7 @@
 
                         <Border Grid.Row="1" Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                             <Grid RowDefinitions="Auto,*">
-                                <TextBlock Text="{Binding ActivityTitle}" FontSize="18" FontWeight="Bold" Foreground="#152C3F"/>
+                                <TextBlock Text="{DynamicResource ActivityTitle}" FontSize="18" FontWeight="Bold" Foreground="#152C3F"/>
                                 <ListBox Grid.Row="1" ItemsSource="{Binding ActivityMessages}" Height="230" Margin="0,10,0,0" Background="#F7FAFD" BorderThickness="0"/>
                             </Grid>
                         </Border>
@@ -124,32 +132,32 @@
                     <Grid Grid.Column="1" RowDefinitions="Auto,*" RowSpacing="20">
                         <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                             <StackPanel Spacing="12">
-                                <TextBlock Text="{Binding CreateJobTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
-                                <TextBlock Text="{Binding NameLabel}" Foreground="#52687A"/>
+                                <TextBlock Text="{DynamicResource CreateJobTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                                <TextBlock Text="{DynamicResource NameLabel}" Foreground="#52687A"/>
                                 <TextBox Text="{Binding JobName}" Watermark="Daily documents backup"/>
-                                <TextBlock Text="{Binding SourceLabel}" Foreground="#52687A"/>
+                                <TextBlock Text="{DynamicResource SourceLabel}" Foreground="#52687A"/>
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBox Grid.Column="0" Text="{Binding SourceDirectory}" Watermark="C:\SourceFolder"/>
                                     <Button Grid.Column="1" Content="..." Width="35" Margin="8,0,0,0" Click="OnBrowseSourceClick" Background="#EAF3F8" Foreground="#152C3F" HorizontalContentAlignment="Center"/>
                                 </Grid>
-                                <TextBlock Text="{Binding TargetLabel}" Foreground="#52687A"/>
+                                <TextBlock Text="{DynamicResource TargetLabel}" Foreground="#52687A"/>
                                 <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
                                     <TextBox Grid.Column="0" Text="{Binding TargetDirectory}" Watermark="D:\BackupFolder"/>
                                     <Button Grid.Column="1" Content="..." Width="35" Margin="8,0,0,0" Click="OnBrowseTargetClick" Background="#EAF3F8" Foreground="#152C3F" HorizontalContentAlignment="Center"/>
                                 </Grid>
-                                <TextBlock Text="{Binding BackupTypeLabel}" Foreground="#52687A"/>
+                                <TextBlock Text="{DynamicResource BackupTypeLabel}" Foreground="#52687A"/>
                                 <ComboBox ItemsSource="{Binding BackupTypes}" SelectedItem="{Binding SelectedBackupType}" HorizontalAlignment="Stretch"/>
                                 <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
-                                    <Button Content="{Binding CreateText}" Command="{Binding CreateJobCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
-                                    <Button Content="{Binding UpdateText}" Command="{Binding UpdateJobCommand}" IsEnabled="{Binding HasSelectedJob}" Background="#705C1D" Foreground="White" Padding="18,10" CornerRadius="6"/>
-                                    <Button Content="{Binding ClearText}" Command="{Binding ClearFormCommand}" Padding="18,10" CornerRadius="6"/>
+                                    <Button Content="{DynamicResource CreateText}" Command="{Binding CreateJobCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                    <Button Content="{DynamicResource UpdateText}" Command="{Binding UpdateJobCommand}" IsEnabled="{Binding HasSelectedJob}" Background="#705C1D" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                                    <Button Content="{DynamicResource ClearText}" Command="{Binding ClearFormCommand}" Padding="18,10" CornerRadius="6"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
 
                         <Border Grid.Row="1" Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                             <Grid RowDefinitions="Auto,*">
-                                <TextBlock Text="{Binding RunLogsTitle}" FontSize="18" FontWeight="Bold" Foreground="#152C3F"/>
+                                <TextBlock Text="{DynamicResource RunLogsTitle}" FontSize="18" FontWeight="Bold" Foreground="#152C3F"/>
                                 <TextBox Grid.Row="1" Text="{Binding RunLogText}" Margin="0,10,0,0" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" FontFamily="Consolas" Background="#F7FAFD"/>
                             </Grid>
                         </Border>
@@ -157,59 +165,69 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="{Binding TabSettingsHeader}">
+            <TabItem Header="{DynamicResource TabSettingsHeader}">
                 <ScrollViewer Margin="0,16,0,0">
                     <StackPanel Spacing="20">
                         <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                             <StackPanel Spacing="12">
-                                <TextBlock Text="{Binding LogSettingsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
-                                <TextBlock Text="{Binding LogFormatLabel}" Foreground="#52687A"/>
-                                <ComboBox ItemsSource="{Binding LogFormats}" SelectedItem="{Binding SelectedLogFormat}" Width="260" HorizontalAlignment="Left"/>
+                                <TextBlock Text="{DynamicResource LogSettingsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                    <StackPanel Grid.Column="0" Spacing="8">
+                                        <TextBlock Text="{DynamicResource LogFormatLabel}" Foreground="#52687A"/>
+                                        <ComboBox ItemsSource="{Binding LogFormats}" SelectedItem="{Binding SelectedLogFormat}" HorizontalAlignment="Stretch"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Spacing="8">
+                                        <TextBlock Text="{DynamicResource LogDestinationLabel}" Foreground="#52687A"/>
+                                        <ComboBox ItemsSource="{Binding LogDestinations}" SelectedItem="{Binding SelectedLogDestination}" HorizontalAlignment="Stretch"/>
+                                    </StackPanel>
+                                </Grid>
                             </StackPanel>
                         </Border>
 
                         <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                             <StackPanel Spacing="12">
-                                <TextBlock Text="{Binding EncryptionSettingsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
-                                <TextBlock Text="{Binding ExtensionsLabel}" Foreground="#52687A"/>
+                                <TextBlock Text="{DynamicResource EncryptionSettingsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                                <TextBlock Text="{DynamicResource ExtensionsLabel}" Foreground="#52687A"/>
                                 <TextBox Text="{Binding ExtensionsToEncrypt}" Watermark=".txt; .pdf; .docx"/>
-                                <TextBlock Text="{Binding CryptoKeyLabel}" Foreground="#52687A"/>
+                                <TextBlock Text="{DynamicResource CryptoKeyLabel}" Foreground="#52687A"/>
                                 <TextBox Text="{Binding CryptoKey}" Watermark="EasySave2026"/>
                             </StackPanel>
                         </Border>
 
                         <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                             <StackPanel Spacing="12">
-                                <TextBlock Text="{Binding BusinessSoftwareSettingsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
-                                <TextBlock Text="{Binding BusinessSoftwareLabel}" Foreground="#52687A"/>
+                                <TextBlock Text="{DynamicResource BusinessSoftwareSettingsTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                                <TextBlock Text="{DynamicResource BusinessSoftwareLabel}" Foreground="#52687A"/>
                                 <TextBox Text="{Binding BusinessSoftware}" Watermark="calculator.exe"/>
                             </StackPanel>
                         </Border>
 
                         <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                             <StackPanel Spacing="12">
-                                <TextBlock Text="{Binding BackupOptimizationTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
-                                <TextBlock Text="{Binding PriorityExtensionsLabel}" Foreground="#52687A"/>
+                                <TextBlock Text="{DynamicResource BackupOptimizationTitle}" FontSize="22" FontWeight="Bold" Foreground="#152C3F"/>
+                                <TextBlock Text="{DynamicResource PriorityExtensionsLabel}" Foreground="#52687A"/>
                                 <TextBox Text="{Binding PriorityExtensions}" Watermark=".pdf; .doc"/>
-                                
-                                <TextBlock Text="{Binding MaxFileSizeLabel}" Foreground="#52687A"/>
+
+                                <TextBlock Text="{DynamicResource MaxFileSizeLabel}" Foreground="#52687A"/>
                                 <NumericUpDown Value="{Binding MaxFileSize}" Minimum="0" Increment="1024" HorizontalAlignment="Left" Width="200"/>
                             </StackPanel>
                         </Border>
 
-                        <Button Content="{Binding SaveSettingsText}" Command="{Binding SaveSettingsCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6" HorizontalAlignment="Left"/>
+                        <Button Content="{DynamicResource SaveSettingsText}" Command="{Binding SaveSettingsCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6" HorizontalAlignment="Left"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="{Binding TabLogsHeader}">
+            <TabItem Header="{DynamicResource TabLogsHeader}">
                 <Grid RowDefinitions="Auto,*" RowSpacing="16" Margin="0,16,0,0">
                     <Border Background="White" BorderBrush="#D8E1EA" BorderThickness="1" CornerRadius="8" Padding="18">
                         <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="{Binding DateLabel}" VerticalAlignment="Center" Foreground="#52687A"/>
+                            <TextBlock Text="{DynamicResource DateLabel}" VerticalAlignment="Center" Foreground="#52687A"/>
                             <TextBox Text="{Binding LogDate}" Width="160" Watermark="yyyy-MM-dd"/>
-                            <Button Content="{Binding LoadLogsText}" Command="{Binding LoadLogsCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
-                            <Button Content="{Binding LoadTodayLogsText}" Command="{Binding LoadTodayLogsCommand}" Padding="18,10" CornerRadius="6"/>
+                            <Button Content="{DynamicResource LoadLogsText}" Command="{Binding LoadLogsCommand}" Background="#1F6F9F" Foreground="White" Padding="18,10" CornerRadius="6"/>
+                            <Button Content="{DynamicResource LoadTodayLogsText}" Command="{Binding LoadTodayLogsCommand}" Padding="18,10" CornerRadius="6"/>
                         </StackPanel>
                     </Border>
 

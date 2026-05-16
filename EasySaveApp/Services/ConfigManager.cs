@@ -1,18 +1,9 @@
 ﻿using EasyLog;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace EasySave.Services
 {
-    public enum LogDestination
-    {
-        Local,
-        Centralized,
-        Both
-    }
 
     public class AppConfig
     {
@@ -29,8 +20,10 @@ namespace EasySave.Services
 
         public List<string> PriorityExtensions { get; set; } = new List<string>();
 
+        // Network parameters for the Docker centralized log server
         public LogDestination LogDestination { get; set; } = LogDestination.Local;
-        public string DockerLogServerAddress { get; set; } = string.Empty;
+        public string LogServerIp { get; set; } = "127.0.0.1";
+        public int LogServerPort { get; set; } = 12345;
     }
 
     public class ConfigManager

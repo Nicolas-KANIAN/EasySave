@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  easysave-log-server:
+    build: 
+      # Set the build context to the root directory so Docker can access both EasySaveLogServer and EasyLog projects
+      context: . 
+      # Specify the path to the Dockerfile relative to the root context
+      dockerfile: EasySaveLogServer/Dockerfile
+    container_name: easysave-log-server
+    ports:
+      # Map port 12345 on the host machine to port 12345 in the container
+      - "12345:12345" 
+    volumes:
+      # Bind mount to persist centralized logs from the container to the host machine
+      - ./CentralizedLogs:/app/Logs
+    restart: unless-stopped

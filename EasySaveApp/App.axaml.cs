@@ -5,6 +5,7 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using EasySaveApp.ViewModels;
 using EasySaveApp.Views;
+using EasySave.Services;
 using System.Linq;
 
 namespace EasySaveApp
@@ -18,6 +19,12 @@ namespace EasySaveApp
 
         public override void OnFrameworkInitializationCompleted()
         {
+            var configManager = new ConfigManager();
+
+            EasyLog.Logger.Instance.Destination = configManager.Config.LogDestination;
+            EasyLog.Logger.Instance.CentralServerIp = configManager.Config.LogServerIp;
+            EasyLog.Logger.Instance.CentralServerPort = configManager.Config.LogServerPort;
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.MainWindow = new MainWindow
