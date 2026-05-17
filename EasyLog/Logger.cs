@@ -1,13 +1,23 @@
-﻿using System.Text.Json;
+﻿using System.Net.Sockets;
+using System.Text;
+using System.Text.Json;
 using System.Xml.Serialization;
 
 namespace EasyLog
 {
-    // Defines the supported formats for log files.
+    // Defines the supported formats for local log files
     public enum LogFormat
     {
         Json,
         Xml
+    }
+
+    // Defines where the daily activity logs should be routed
+    public enum LogDestination
+    {
+        Local,
+        Centralized,
+        Both
     }
 
     public class Logger
@@ -19,7 +29,11 @@ namespace EasyLog
 
         private LogFormat _format = LogFormat.Json;
 
-        // Determines the format used for writing log files.
+        // Network configuration
+        public LogDestination Destination { get; set; } = LogDestination.Local;
+        public string CentralServerIp { get; set; } = "127.0.0.1";
+        public int CentralServerPort { get; set; } = 12345;
+
         public LogFormat Format
         {
             get => _format;
@@ -30,7 +44,6 @@ namespace EasyLog
                     if (_format == value) return;
                     _format = value;
 
-                    // Deletes the state file of the old format to prevent stale data.
                     string staleExt = value == LogFormat.Json ? ".xml" : ".json";
                     string stalePath = Path.Combine(_logDirectory, $"state{staleExt}");
 
@@ -53,8 +66,6 @@ namespace EasyLog
             }
         }
 
-        // Centralizes the management of log writing and real-time tracking.
-        // Automatically creates the log directory.
         private Logger()
         {
             if (!Directory.Exists(_logDirectory))
@@ -63,7 +74,6 @@ namespace EasyLog
             }
         }
 
-        // Gets the thread-safe Singleton instance of the Logger.
         public static Logger Instance
         {
             get
@@ -79,11 +89,56 @@ namespace EasyLog
             }
         }
 
-        // Appends a new log entry to the daily log file.
-        // Serializes in JSON or XML based on the Format property.
         public void WriteDailyLog(LogEntry entry)
         {
-            lock (_lock) // Ensures thread-safety during Read/Write operations
+            // 1. CENTRALIZED LOGGING (DOCKER)
+            if (Destination == LogDestination.Centralized || Destination == LogDestination.Both)
+            {
+                // Execute in the background to avoid blocking the main backup thread
+                Task.Run(() => SendLogToCentralServer(entry));
+            }
+
+            // 2. LOCAL LOGGING
+            if (Destination == LogDestination.Local || Destination == LogDestination.Both)
+            {
+                WriteLocalDailyLog(entry);
+            }
+        }
+
+        public void UpdateState(List<StateEntry> states)
+        {
+            lock (_lock)
+            {
+                string extension = Format == LogFormat.Json ? ".json" : ".xml";
+                string filePath = Path.Combine(_logDirectory, $"state{extension}");
+
+                try
+                {
+                    if (Format == LogFormat.Json)
+                    {
+                        var options = new JsonSerializerOptions { WriteIndented = true };
+                        File.WriteAllText(filePath, JsonSerializer.Serialize(states, options));
+                    }
+                    else if (Format == LogFormat.Xml)
+                    {
+                        XmlSerializer serializer = new XmlSerializer(typeof(List<StateEntry>));
+                        using (StreamWriter writer = new StreamWriter(filePath))
+                        {
+                            serializer.Serialize(writer, states);
+                        }
+                    }
+                }
+                catch (IOException)
+                {
+                    // Silent failure if the UI is reading the file simultaneously.
+                    // It will be safely overwritten during the next tick.
+                }
+            }
+        }
+
+        private void WriteLocalDailyLog(LogEntry entry)
+        {
+            lock (_lock)
             {
                 string date = DateTime.Now.ToString("yyyy-MM-dd");
                 string extension = Format == LogFormat.Json ? ".json" : ".xml";
@@ -95,17 +150,17 @@ namespace EasyLog
                 {
                     if (File.Exists(filePath))
                     {
-                        string json = File.ReadAllText(filePath);
-                        if (!string.IsNullOrWhiteSpace(json))
+                        try
                         {
-                            try
+                            string json = File.ReadAllText(filePath);
+                            if (!string.IsNullOrWhiteSpace(json))
                             {
                                 logs = JsonSerializer.Deserialize<List<LogEntry>>(json) ?? new List<LogEntry>();
                             }
-                            catch (JsonException)
-                            {
-                                logs = new List<LogEntry>();
-                            }
+                        }
+                        catch (JsonException)
+                        {
+                            logs = new List<LogEntry>();
                         }
                     }
 
@@ -119,16 +174,16 @@ namespace EasyLog
 
                     if (File.Exists(filePath) && new FileInfo(filePath).Length > 0)
                     {
-                        using (StreamReader reader = new StreamReader(filePath))
+                        try
                         {
-                            try
+                            using (StreamReader reader = new StreamReader(filePath))
                             {
                                 logs = (List<LogEntry>?)serializer.Deserialize(reader) ?? new List<LogEntry>();
                             }
-                            catch (InvalidOperationException)
-                            {
-                                logs = new List<LogEntry>();
-                            }
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            logs = new List<LogEntry>();
                         }
                     }
 
@@ -142,28 +197,23 @@ namespace EasyLog
             }
         }
 
-        // Updates the state file with the current progress of backup jobs.
-        // Overwrites the file in JSON or XML based on the Format property.
-        public void UpdateState(List<StateEntry> states)
+        private void SendLogToCentralServer(LogEntry entry)
         {
-            lock (_lock)
+            try
             {
-                string extension = Format == LogFormat.Json ? ".json" : ".xml";
-                string filePath = Path.Combine(_logDirectory, $"state{extension}");
+                // Serialize the log entry into a single unindented line for TCP transmission
+                string jsonLog = JsonSerializer.Serialize(entry);
 
-                if (Format == LogFormat.Json)
-                {
-                    var options = new JsonSerializerOptions { WriteIndented = true };
-                    File.WriteAllText(filePath, JsonSerializer.Serialize(states, options));
-                }
-                else if (Format == LogFormat.Xml)
-                {
-                    XmlSerializer serializer = new XmlSerializer(typeof(List<StateEntry>));
-                    using (StreamWriter writer = new StreamWriter(filePath))
-                    {
-                        serializer.Serialize(writer, states);
-                    }
-                }
+                using TcpClient client = new TcpClient(CentralServerIp, CentralServerPort);
+                using NetworkStream stream = client.GetStream();
+                using StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
+
+                writer.WriteLine(jsonLog);
+                writer.Flush();
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[WARNING] Failed to send log to central server at {CentralServerIp}:{CentralServerPort} - {ex.Message}");
             }
         }
 
