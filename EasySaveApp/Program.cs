@@ -1,6 +1,6 @@
 ﻿using Avalonia;
-using EasySave.Services;
 using EasySave.Models;
+using EasySave.Services;
 
 namespace EasySaveApp
 {
@@ -25,9 +25,9 @@ namespace EasySaveApp
         public static AppBuilder BuildAvaloniaApp()
             => AppBuilder.Configure<App>()
                 .UsePlatformDetect()
-                #if DEBUG
+#if DEBUG
                 .WithDeveloperTools()
-                #endif
+#endif
                 .WithInterFont()
                 .LogToTrace();
 

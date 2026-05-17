@@ -3,9 +3,9 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using EasySave.Services;
 using EasySaveApp.ViewModels;
 using EasySaveApp.Views;
-using EasySave.Services;
 using System.Linq;
 
 namespace EasySaveApp
