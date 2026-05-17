@@ -1,13 +1,9 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core;
-using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using EasySave.Services;
 using EasySaveApp.ViewModels;
 using EasySaveApp.Views;
-using System.Linq;
-
 namespace EasySaveApp
 {
     public partial class App : Application
@@ -22,8 +18,8 @@ namespace EasySaveApp
             var configManager = new ConfigManager();
 
             EasyLog.Logger.Instance.Destination = configManager.Config.LogDestination;
-            EasyLog.Logger.Instance.CentralServerIp = configManager.Config.LogServerIp;
-            EasyLog.Logger.Instance.CentralServerPort = configManager.Config.LogServerPort;
+            EasyLog.Logger.Instance.LogServerIp = configManager.Config.LogServerIp;
+            EasyLog.Logger.Instance.LogServerPort = configManager.Config.LogServerPort;
 
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {

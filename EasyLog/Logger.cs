@@ -31,8 +31,8 @@ namespace EasyLog
 
         // Network configuration
         public LogDestination Destination { get; set; } = LogDestination.Local;
-        public string CentralServerIp { get; set; } = "127.0.0.1";
-        public int CentralServerPort { get; set; } = 12345;
+        public string LogServerIp { get; set; } = "127.0.0.1";
+        public int LogServerPort { get; set; } = 12345;
 
         public LogFormat Format
         {
@@ -91,10 +91,9 @@ namespace EasyLog
 
         public void WriteDailyLog(LogEntry entry)
         {
-            // 1. CENTRALIZED LOGGING (DOCKER)
+            // 1. CENTRALIZED LOGGING
             if (Destination == LogDestination.Centralized || Destination == LogDestination.Both)
             {
-                // Execute in the background to avoid blocking the main backup thread
                 Task.Run(() => SendLogToCentralServer(entry));
             }
 
@@ -204,7 +203,7 @@ namespace EasyLog
                 // Serialize the log entry into a single unindented line for TCP transmission
                 string jsonLog = JsonSerializer.Serialize(entry);
 
-                using TcpClient client = new TcpClient(CentralServerIp, CentralServerPort);
+                using TcpClient client = new TcpClient(LogServerIp, LogServerPort);
                 using NetworkStream stream = client.GetStream();
                 using StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
 
@@ -213,7 +212,7 @@ namespace EasyLog
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"[WARNING] Failed to send log to central server at {CentralServerIp}:{CentralServerPort} - {ex.Message}");
+                Console.Error.WriteLine($"[WARNING] Failed to send log to central server at {LogServerIp}:{LogServerPort} - {ex.Message}");
             }
         }
 
