@@ -1,5 +1,6 @@
 ﻿using EasyLog;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace EasySaveApp.Services
 {
@@ -30,40 +31,51 @@ namespace EasySaveApp.Services
                 if (format == LogFormat.Xml)
                 {
                     string xml = ReadFileSafely(statePath);
-                    string startTag = "<Progression>";
-                    string endTag = "</Progression>";
-                    int startIndex = xml.IndexOf(startTag, StringComparison.OrdinalIgnoreCase);
-                    int endIndex = xml.IndexOf(endTag, StringComparison.OrdinalIgnoreCase);
+                    if (string.IsNullOrWhiteSpace(xml)) return null;
 
-                    if (startIndex >= 0 && endIndex > startIndex)
+                    XDocument doc = XDocument.Parse(xml);
+
+                    foreach (var element in doc.Descendants("StateEntry"))
                     {
-                        if (!xml.Contains("<Name>" + jobName + "</Name>", StringComparison.OrdinalIgnoreCase)) return null;
-                        if (!xml.Contains("<State>ACTIVE</State>", StringComparison.OrdinalIgnoreCase)) return null;
+                        string? name = element.Element("Name")?.Value;
+                        string? state = element.Element("State")?.Value;
 
-                        startIndex += startTag.Length;
-                        string value = xml.Substring(startIndex, endIndex - startIndex);
-                        if (int.TryParse(value, out int progress)) return progress;
+                        if (string.Equals(name, jobName, StringComparison.OrdinalIgnoreCase) &&
+                            string.Equals(state, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string? progStr = element.Element("Progression")?.Value;
+                            if (int.TryParse(progStr, out int progress))
+                            {
+                                return progress;
+                            }
+                        }
                     }
                     return null;
                 }
 
                 // Format JSON
                 string json = ReadFileSafely(statePath);
+                if (string.IsNullOrWhiteSpace(json)) return null;
+
                 using JsonDocument document = JsonDocument.Parse(json);
 
-                if (document.RootElement.ValueKind == JsonValueKind.Array &&
-                    document.RootElement.GetArrayLength() > 0 &&
-                    document.RootElement[0].TryGetProperty("Name", out JsonElement name) &&
-                    document.RootElement[0].TryGetProperty("State", out JsonElement state) &&
-                    document.RootElement[0].TryGetProperty("Progression", out JsonElement progression))
+                if (document.RootElement.ValueKind == JsonValueKind.Array)
                 {
-                    string? stateJobName = name.GetString();
-                    string? stateValue = state.GetString();
-
-                    if (string.Equals(stateJobName, jobName, StringComparison.OrdinalIgnoreCase) &&
-                        string.Equals(stateValue, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+                    foreach (JsonElement element in document.RootElement.EnumerateArray())
                     {
-                        return progression.GetInt32();
+                        if (element.TryGetProperty("Name", out JsonElement name) &&
+                            element.TryGetProperty("State", out JsonElement state) &&
+                            element.TryGetProperty("Progression", out JsonElement progression))
+                        {
+                            string? stateJobName = name.GetString();
+                            string? stateValue = state.GetString();
+
+                            if (string.Equals(stateJobName, jobName, StringComparison.OrdinalIgnoreCase) &&
+                                string.Equals(stateValue, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+                            {
+                                return progression.GetInt32();
+                            }
+                        }
                     }
                 }
             }

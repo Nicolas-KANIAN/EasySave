@@ -29,6 +29,11 @@ namespace EasySave.Services
 
         public BackupEngine(AppConfig config, BusinessSoftwareMonitor monitor, IFileSystem fileSystem, EncryptionService encryptionService)
         {
+            ArgumentNullException.ThrowIfNull(config);
+            ArgumentNullException.ThrowIfNull(monitor);
+            ArgumentNullException.ThrowIfNull(fileSystem);
+            ArgumentNullException.ThrowIfNull(encryptionService);
+
             _fileSystem = fileSystem;
             _observers = new List<IBackupObserver>();
             _config = config;
