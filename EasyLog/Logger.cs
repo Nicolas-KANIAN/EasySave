@@ -211,9 +211,9 @@ namespace EasyLog
                 writer.WriteLine(jsonLog);
                 writer.Flush();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Silently ignore errors if the Docker server is offline or unreachable.
+                Console.Error.WriteLine($"[WARNING] Failed to send log to central server at {CentralServerIp}:{CentralServerPort} - {ex.Message}");
             }
         }
 

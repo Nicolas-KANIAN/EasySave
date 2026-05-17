@@ -1,6 +1,9 @@
 ﻿using Avalonia;
 using EasySave.Models;
 using EasySave.Services;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace EasySaveApp
 {
@@ -42,7 +45,6 @@ namespace EasySaveApp
             businessMonitor.SetSoftwareName(configManager.Config.BusinessSoftware);
             businessMonitor.Start();
 
-            var backupEngine = new BackupEngine(configManager.Config, businessMonitor);
             var jobsToRun = new List<BackupJob>();
 
             try
@@ -63,12 +65,22 @@ namespace EasySaveApp
                 else if (arg.Contains(';'))
                 {
                     var parts = arg.Split(';');
+                    var uniqueIndices = new HashSet<int>();
+
                     foreach (var part in parts)
                     {
                         if (int.TryParse(part, out int index))
                         {
-                            if (index - 1 >= 0 && index - 1 < jobManager.Jobs.Count) jobsToRun.Add(jobManager.Jobs[index - 1]);
+                            if (index - 1 >= 0 && index - 1 < jobManager.Jobs.Count)
+                            {
+                                uniqueIndices.Add(index - 1);
+                            }
                         }
+                    }
+
+                    foreach (int idx in uniqueIndices)
+                    {
+                        jobsToRun.Add(jobManager.Jobs[idx]);
                     }
                 }
                 // Parse single job format (e.g., "2")
@@ -92,7 +104,9 @@ namespace EasySaveApp
                 foreach (var job in jobsToRun)
                 {
                     Console.WriteLine($"> Starting {job.Name}...");
-                    tasks.Add(Task.Run(() => backupEngine.ExecuteJob(job)));
+
+                    var engine = new BackupEngine(configManager.Config, businessMonitor);
+                    tasks.Add(Task.Run(() => engine.ExecuteJob(job)));
                 }
 
                 await Task.WhenAll(tasks);

@@ -4,13 +4,8 @@ using CommunityToolkit.Mvvm.Input;
 using EasyLog;
 using EasySave.Models;
 using EasySave.Services;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace EasySaveApp.ViewModels
@@ -280,7 +275,7 @@ namespace EasySaveApp.ViewModels
             string name = JobName.Trim();
             string source = SourceDirectory.Trim().Trim('"');
             string target = TargetDirectory.Trim().Trim('"');
-            BackupType type = SelectedBackupType == BackupTypes[0] ? BackupType.Full : BackupType.Differential;
+            BackupType type = (BackupTypes.Count > 0 && SelectedBackupType == BackupTypes[0]) ? BackupType.Full : BackupType.Differential;
 
             BackupJob newJob = new BackupJob(name, source, target, type);
             _jobManager.CreateJob(newJob);
@@ -303,7 +298,7 @@ namespace EasySaveApp.ViewModels
 
             if (index < 0) { SetValidation("Error: selected job was not found."); return; }
 
-            BackupType type = SelectedBackupType == BackupTypes[0] ? BackupType.Full : BackupType.Differential;
+            BackupType type = (BackupTypes.Count > 0 && SelectedBackupType == BackupTypes[0]) ? BackupType.Full : BackupType.Differential;
             BackupJob updatedJob = new BackupJob(updatedJobName, SourceDirectory.Trim().Trim('"'), TargetDirectory.Trim().Trim('"'), type);
 
             _jobManager.UpdateJob(index, updatedJob);

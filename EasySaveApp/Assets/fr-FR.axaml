@@ -37,7 +37,7 @@
     <x:String x:Key="ResumeText">Reprendre</x:String>
     <x:String x:Key="StopText">Arrêter</x:String>
     <x:String x:Key="PriorityExtensionsLabel">Extensions prioritaires</x:String>
-    <x:String x:Key="MaxFileSizeLabel">Taille max (Ko) fichiers</x:String>
+    <x:String x:Key="MaxFileSizeLabel">Taille max (Ko) fichiers parallèles</x:String>
     <x:String x:Key="BackupOptimizationTitle">Optimisation de sauvegarde</x:String>
     <x:String x:Key="SourcePrefix">Source :</x:String>
     <x:String x:Key="TargetPrefix">Cible :</x:String>

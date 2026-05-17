@@ -21,8 +21,11 @@ FROM mcr.microsoft.com/dotnet/runtime:8.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# Create the Logs directory to prevent permission errors
-RUN mkdir -p /app/Logs
+# Create the Logs directory and assign ownership to the built-in non-root 'app' user
+RUN mkdir -p /app/Logs && chown -R app:app /app
+
+# Switch to the non-root user for security
+USER app
 
 EXPOSE 12345
 ENTRYPOINT ["dotnet", "EasySaveLogServer.dll"]

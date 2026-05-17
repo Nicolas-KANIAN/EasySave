@@ -1,8 +1,8 @@
-﻿using EasyLog;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using EasyLog;
 
 namespace EasySaveLogServer
 {
@@ -48,12 +48,20 @@ namespace EasySaveLogServer
 
                     if (jsonLogEntry != null)
                     {
-                        var entry = JsonSerializer.Deserialize<LogEntry>(jsonLogEntry);
-
-                        if (entry != null)
+                        try
                         {
-                            Logger.Instance.WriteDailyLog(entry);
-                            Console.WriteLine($"[Log Received] {entry.BackupName} - {entry.Timestamp}");
+                            var entry = JsonSerializer.Deserialize<LogEntry>(jsonLogEntry);
+
+                            if (entry != null)
+                            {
+                                Logger.Instance.WriteDailyLog(entry);
+                                Console.WriteLine($"[Log Received] {entry.BackupName} - {entry.Timestamp}");
+                            }
+                        }
+                        catch (JsonException ex)
+                        {
+                            Console.WriteLine($"[JSON Error] Malformed log entry received: {jsonLogEntry} - {ex.Message}");
+                            continue;
                         }
                     }
                     else break;
