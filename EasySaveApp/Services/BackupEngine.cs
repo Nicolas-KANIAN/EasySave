@@ -35,8 +35,43 @@ namespace EasySave.Services
             _encryptionService = new EncryptionService(config);
             _businessMonitor = monitor;
 
-            _businessMonitor.SoftwareStarted += (s, e) => { lock (_pauseLock) { _isMonitorPaused = true; UpdatePauseState(); } };
-            _businessMonitor.SoftwareStopped += (s, e) => { lock (_pauseLock) { _isMonitorPaused = false; UpdatePauseState(); } };
+            _businessMonitor.SoftwareStarted += (s, e) =>
+            {
+                lock (_pauseLock)
+                {
+                    _isMonitorPaused = true;
+                    UpdatePauseState();
+                }
+
+                Logger.Instance.WriteDailyLog(new LogEntry
+                {
+                    BackupName = _activeJob != null ? _activeJob.Name : "EasySave System",
+                    SourceFile = "Business software detected",
+                    TargetFile = "Job PAUSED",
+                    FileSize = 0,
+                    TransferTime = -1,
+                    EncryptionTime = 0
+                });
+            };
+
+            _businessMonitor.SoftwareStopped += (s, e) =>
+            {
+                lock (_pauseLock)
+                {
+                    _isMonitorPaused = false;
+                    UpdatePauseState();
+                }
+
+                Logger.Instance.WriteDailyLog(new LogEntry
+                {
+                    BackupName = _activeJob != null ? _activeJob.Name : "EasySave System",
+                    SourceFile = "Business software closed",
+                    TargetFile = "Job RESUMED",
+                    FileSize = 0,
+                    TransferTime = 0,
+                    EncryptionTime = 0
+                });
+            };
 
             AttachObserver(new StateLoggerObserver());
         }
@@ -99,7 +134,6 @@ namespace EasySave.Services
                 job.Progress = 0;
                 job.ShowProgress = true;
 
-                // Evaluate initial pause state immediately using the unified helper
                 lock (_pauseLock)
                 {
                     _isUserPaused = false;
@@ -112,15 +146,28 @@ namespace EasySave.Services
 
                 var allFiles = _fileSystem.GetFilesRecursive(job.SourceDirectory);
                 IBackupStrategy strategy = BackupFactory.CreateStrategy(job.Type);
-                var filesToCopy = strategy.GetFilesToCopy(job.SourceDirectory, job.TargetDirectory, allFiles, _fileSystem);
+
+                var filesToCopy = strategy.GetFilesToCopy(job.SourceDirectory, job.TargetDirectory, allFiles, _fileSystem).ToList();
+
+                List<string> priorityFiles = new List<string>();
+                List<string> normalFiles = new List<string>();
 
                 if (_config.PriorityExtensions?.Any() == true)
                 {
-                    filesToCopy = filesToCopy.OrderByDescending(f =>
-                        _config.PriorityExtensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase)).ToList();
+                    foreach (var file in filesToCopy)
+                    {
+                        if (_config.PriorityExtensions.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase))
+                            priorityFiles.Add(file);
+                        else
+                            normalFiles.Add(file);
+                    }
+                }
+                else
+                {
+                    normalFiles = filesToCopy;
                 }
 
-                int totalFiles = filesToCopy.Count;
+                int totalFiles = priorityFiles.Count + normalFiles.Count;
                 long totalSize = filesToCopy.Sum(f => _fileSystem.GetFileSize(f));
 
                 if (totalFiles == 0)
@@ -150,7 +197,7 @@ namespace EasySave.Services
                         CancellationToken = _cts.Token
                     };
 
-                    Parallel.ForEach(filesToCopy, options, (sourceFile, state) =>
+                    Action<string> processFile = (sourceFile) =>
                     {
                         try
                         {
@@ -221,7 +268,17 @@ namespace EasySave.Services
                         {
                             return;
                         }
-                    });
+                    };
+
+                    if (priorityFiles.Count > 0)
+                    {
+                        Parallel.ForEach(priorityFiles, options, processFile);
+                    }
+
+                    if (normalFiles.Count > 0)
+                    {
+                        Parallel.ForEach(normalFiles, options, processFile);
+                    }
 
                     if (_cts.IsCancellationRequested)
                     {
