@@ -56,7 +56,7 @@ Le `Program.cs` court-circuite l'UI Avalonia lorsqu'il détecte des arguments (e
 
 **1. Diagramme de Cas d'Utilisation (Use Case)**
 Intègre les nouvelles commandes de contrôle (Pause/Stop) et le mode CLI.
-<img src="./assets/Usecase Diagram V.3.0.svg" alt="Diagramme de Cas d'Utilisation" width="600" />
+<img src="./assets/Usecase Diagram V.3.0.png" alt="Diagramme de Cas d'Utilisation" width="600" />
 
 **2. Diagramme d'Activité**
 Détaille le flux parallèle, l'attente du sémaphore pour les gros fichiers, et la boucle prioritaire.
@@ -68,7 +68,7 @@ Illustre l'émission asynchrone des logs vers le serveur TCP (Docker) et la mise
 
 **4. Diagramme de Classes**
 Affiche l'injection complète des dépendances et les nouveaux services.
-<img src="./assets/Class Diagram V.3.0.png" alt="Diagramme de Classes" width="600" />
+<img src="./assets/Class Diagram V.3.0.svg" alt="Diagramme de Classes" width="600" />
 
 ### Respect des Principes SOLID
 
