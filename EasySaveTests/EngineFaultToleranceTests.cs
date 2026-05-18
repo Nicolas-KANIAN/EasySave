@@ -1,5 +1,8 @@
 ﻿using EasySave.Models;
+using EasySave.Patterns.Bridge;
 using EasySave.Services;
+using System;
+using Xunit;
 
 namespace EasySave.Tests.Services
 {
@@ -10,9 +13,12 @@ namespace EasySave.Tests.Services
         public void ExecuteJob_ShouldNotCrash_WhenSourceDirectoryDoesNotExist()
         {
             var dummyConfig = new AppConfig();
-
             var dummyMonitor = new BusinessSoftwareMonitor();
-            var engine = new BackupEngine(dummyConfig, dummyMonitor);
+
+            var fileSystem = new LocalFileSystem();
+            var encryptionService = new EncryptionService(dummyConfig);
+
+            var engine = new BackupEngine(dummyConfig, dummyMonitor, fileSystem, encryptionService);
 
             string fakeSource = "Z:\\FolderThatDoesNotExist_123456";
             var job = new BackupJob("ImpossibleJob", fakeSource, "C:\\Dest", BackupType.Full);

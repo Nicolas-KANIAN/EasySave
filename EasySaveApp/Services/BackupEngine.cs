@@ -27,12 +27,17 @@ namespace EasySave.Services
 
         private BackupJob? _activeJob;
 
-        public BackupEngine(AppConfig config, BusinessSoftwareMonitor monitor)
+        public BackupEngine(AppConfig config, BusinessSoftwareMonitor monitor, IFileSystem fileSystem, EncryptionService encryptionService)
         {
-            _fileSystem = new LocalFileSystem();
+            ArgumentNullException.ThrowIfNull(config);
+            ArgumentNullException.ThrowIfNull(monitor);
+            ArgumentNullException.ThrowIfNull(fileSystem);
+            ArgumentNullException.ThrowIfNull(encryptionService);
+
+            _fileSystem = fileSystem;
             _observers = new List<IBackupObserver>();
             _config = config;
-            _encryptionService = new EncryptionService(config);
+            _encryptionService = encryptionService;
             _businessMonitor = monitor;
 
             _businessMonitor.SoftwareStarted += (s, e) =>

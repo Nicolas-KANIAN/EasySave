@@ -1,9 +1,7 @@
 ﻿using Avalonia;
 using EasySave.Models;
+using EasySave.Patterns.Bridge;
 using EasySave.Services;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace EasySaveApp
 {
@@ -105,7 +103,10 @@ namespace EasySaveApp
                 {
                     Console.WriteLine($"> Starting {job.Name}...");
 
-                    var engine = new BackupEngine(configManager.Config, businessMonitor);
+                    var fileSystem = new LocalFileSystem();
+                    var encryptionService = new EncryptionService(configManager.Config);
+                    var engine = new BackupEngine(configManager.Config, businessMonitor, fileSystem, encryptionService);
+
                     tasks.Add(Task.Run(() => engine.ExecuteJob(job)));
                 }
 
