@@ -11,7 +11,7 @@ namespace EasySaveApp.ViewModels
 {
     public enum ValidationState { Info, Success, Error }
 
-    public class MainWindowViewModel : ViewModelBase
+    public class MainWindowViewModel : ViewModelBase, IDisposable
     {
         // --- Services & Managers ---
         private readonly JobManager _jobManager;
@@ -201,7 +201,8 @@ namespace EasySaveApp.ViewModels
             foreach (BackupJob job in Jobs) SelectableJobs.Add(new SelectableBackupJob(job));
 
             ActivityMessages = new ObservableCollection<string>();
-            BackupTypes = new ObservableCollection<string>();
+
+            BackupTypes = new ObservableCollection<string> { "Full", "Differential" };
 
             LogFormats = new ObservableCollection<string> { "Json", "Xml" };
             SelectedLogFormat = _configManager.Config.LogFormat.ToString();
@@ -393,7 +394,8 @@ namespace EasySaveApp.ViewModels
 
         private void LoadCurrentProgress()
         {
-            int? progress = _logReader.GetJobProgress(GetStatePath(), _runningJobName, _configManager.Config.LogFormat);
+            string statePath = GetStatePath();
+            int? progress = _logReader.GetJobProgress(statePath, _runningJobName, _configManager.Config.LogFormat);
             if (progress.HasValue) BackupProgress = progress.Value;
         }
 
@@ -516,6 +518,15 @@ namespace EasySaveApp.ViewModels
         {
             ActivityMessages.Insert(0, $"[{DateTime.Now:HH:mm:ss}] {message}");
             while (ActivityMessages.Count > 40) ActivityMessages.RemoveAt(ActivityMessages.Count - 1);
+        }
+
+        public void Dispose()
+        {
+            if (_businessMonitor != null)
+            {
+                _businessMonitor.Stop();
+            }
+            GC.SuppressFinalize(this);
         }
     }
 

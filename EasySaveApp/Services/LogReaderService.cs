@@ -73,7 +73,10 @@ namespace EasySaveApp.Services
                             if (string.Equals(stateJobName, jobName, StringComparison.OrdinalIgnoreCase) &&
                                 string.Equals(stateValue, "ACTIVE", StringComparison.OrdinalIgnoreCase))
                             {
-                                return progression.GetInt32();
+                                if (progression.TryGetInt32(out int progress))
+                                {
+                                    return progress;
+                                }
                             }
                         }
                     }

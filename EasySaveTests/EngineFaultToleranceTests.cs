@@ -1,8 +1,6 @@
 ﻿using EasySave.Models;
 using EasySave.Patterns.Bridge;
 using EasySave.Services;
-using System;
-using Xunit;
 
 namespace EasySave.Tests.Services
 {
