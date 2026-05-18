@@ -26,6 +26,7 @@ namespace EasyLog
 
         private static Logger? _instance;
         private static readonly object _lock = new object();
+        private static readonly SemaphoreSlim _networkSemaphore = new SemaphoreSlim(5, 5); // Limits concurrent network connections
 
         private LogFormat _format = LogFormat.Json;
 
@@ -94,7 +95,7 @@ namespace EasyLog
             // 1. CENTRALIZED LOGGING
             if (Destination == LogDestination.Centralized || Destination == LogDestination.Both)
             {
-                Task.Run(() => SendLogToCentralServer(entry));
+                Task.Run(async () => await SendLogToCentralServerAsync(entry));
             }
 
             // 2. LOCAL LOGGING
@@ -196,23 +197,54 @@ namespace EasyLog
             }
         }
 
-        private void SendLogToCentralServer(LogEntry entry)
+        private async Task SendLogToCentralServerAsync(LogEntry entry)
         {
+            await _networkSemaphore.WaitAsync();
             try
             {
                 // Serialize the log entry into a single unindented line for TCP transmission
                 string jsonLog = JsonSerializer.Serialize(entry);
+                int maxRetries = 3;
+                int delayMs = 500;
 
-                using TcpClient client = new TcpClient(LogServerIp, LogServerPort);
-                using NetworkStream stream = client.GetStream();
-                using StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
+                for (int i = 0; i < maxRetries; i++)
+                {
+                    try
+                    {
+                        using TcpClient client = new TcpClient();
 
-                writer.WriteLine(jsonLog);
-                writer.Flush();
+                        var connectTask = client.ConnectAsync(LogServerIp, LogServerPort);
+                        if (await Task.WhenAny(connectTask, Task.Delay(2000)) == connectTask)
+                        {
+                            await connectTask;
+                            using NetworkStream stream = client.GetStream();
+                            using StreamWriter writer = new StreamWriter(stream, Encoding.UTF8);
+
+                            await writer.WriteLineAsync(jsonLog);
+                            await writer.FlushAsync();
+                            return;
+                        }
+                        else
+                        {
+                            throw new TimeoutException("Connection timed out.");
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        if (i == maxRetries - 1) throw;
+
+                        await Task.Delay(delayMs);
+                        delayMs *= 2;
+                    }
+                }
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"[WARNING] Failed to send log to central server at {LogServerIp}:{LogServerPort} - {ex.Message}");
+            }
+            finally
+            {
+                _networkSemaphore.Release();
             }
         }
 

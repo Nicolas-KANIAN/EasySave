@@ -56,7 +56,7 @@ The architecture uses a `ManualResetEvent` to instantly freeze parallel threads 
 
 **1. Use Case Diagram**
 Integrates the new control commands (Pause/Stop) and the CLI mode.
-<img src="./assets/Usecase Diagram V.3.0.png" alt="Use Case Diagram" width="600" />
+<img src="./assets/Usecase Diagram V.3.0.svg" alt="Use Case Diagram" width="600" />
 
 **2. Activity Diagram**
 Details the parallel flow, the semaphore wait for large files, and the priority loop.
