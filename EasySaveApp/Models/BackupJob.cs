@@ -3,8 +3,15 @@ using System.Text.Json.Serialization;
 
 namespace EasySave.Models
 {
-    // Represents a backup job configuration containing its name, source, target, and type.
-    // Inherits from ObservableObject to notify the UI of changes in real-time.
+    public enum JobState
+    {
+        Inactive,
+        Active,
+        Paused,
+        Aborted,
+        Completed
+    }
+
     public class BackupJob : ObservableObject
     {
         private string _name;
@@ -35,27 +42,37 @@ namespace EasySave.Models
             set => SetProperty(ref _type, value);
         }
 
-        // The property that feeds the progress bar
-        [JsonIgnore]
         private double _progress;
+        [JsonIgnore]
         public double Progress
         {
             get => _progress;
             set => SetProperty(ref _progress, value);
         }
 
-        // The property that shows/hides the progress bar
-        [JsonIgnore]
         private bool _showProgress;
+        [JsonIgnore]
         public bool ShowProgress
         {
             get => _showProgress;
             set => SetProperty(ref _showProgress, value);
         }
 
-        // Empty constructor (often required for JSON/XML deserialization)
+        private JobState _state;
+        [JsonIgnore]
+        public JobState State
+        {
+            get => _state;
+            set => SetProperty(ref _state, value);
+        }
+
         public BackupJob()
         {
+            _name = string.Empty;
+            _sourceDirectory = string.Empty;
+            _targetDirectory = string.Empty;
+            _type = BackupType.Full;
+            _state = JobState.Inactive;
         }
 
         public BackupJob(string name, string sourceDirectory, string targetDirectory, BackupType type)
@@ -66,6 +83,7 @@ namespace EasySave.Models
             _type = type;
             _progress = 0;
             _showProgress = false;
+            _state = JobState.Inactive;
         }
     }
 }

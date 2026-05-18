@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace EasySave.Services
 {
+
     public class AppConfig
     {
         public LogFormat LogFormat { get; set; } = LogFormat.Json;
@@ -12,8 +13,17 @@ namespace EasySave.Services
 
         public string BusinessSoftware { get; set; } = string.Empty;
 
-        public string CryptoSoftPath { get; set; } = "CryptoSoft.exe";
+        public string CryptoSoftPath { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CryptoSoft.dll");
         public string CryptoKey { get; set; } = string.Empty;
+
+        public long MaxFileSizeKbForSimultaneous { get; set; } = 10000;
+
+        public List<string> PriorityExtensions { get; set; } = new List<string>();
+
+        // Network parameters for the Docker centralized log server
+        public LogDestination LogDestination { get; set; } = LogDestination.Local;
+        public string LogServerIp { get; set; } = "127.0.0.1";
+        public int LogServerPort { get; set; } = 12345;
     }
 
     public class ConfigManager
